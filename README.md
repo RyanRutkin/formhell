@@ -4,6 +4,8 @@ Finally escape form hell with FormHell
 
 Incredibly robust yet remarkably simple JSON Schema based forms for React.
 
+![FormHell icon](favicon.svg)
+
 ## Why This Library Exists
 
 I wrote this library out of pure JSON Schema fatigue.

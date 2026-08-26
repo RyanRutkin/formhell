@@ -1,14 +1,14 @@
 .raf-schema-form {
-  --raf-color-border: #d9dce1;
-  --raf-color-border-focus: #1976d2;
-  --raf-color-label: #2a3340;
-  --raf-color-muted: #6c7684;
-  --raf-color-surface: #ffffff;
-  --raf-color-surface-alt: #f8f9fb;
-  --raf-color-danger: #b42318;
-  --raf-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.08);
-  --raf-shadow-md: 0 8px 20px rgba(16, 24, 40, 0.08);
-  color: #101828;
+  --raf-color-border: var(--mui-palette-divider, #d9dce1);
+  --raf-color-border-focus: var(--mui-palette-primary-main, #1976d2);
+  --raf-color-label: var(--mui-palette-text-primary, #2a3340);
+  --raf-color-muted: var(--mui-palette-text-secondary, #6c7684);
+  --raf-color-surface: var(--mui-palette-background-paper, #ffffff);
+  --raf-color-surface-alt: color-mix(in srgb, var(--mui-palette-background-paper, #f8f9fb) 82%, var(--mui-palette-background-default, #ffffff));
+  --raf-color-danger: var(--mui-palette-error-main, #b42318);
+  --raf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --raf-shadow-md: 0 8px 20px rgba(0, 0, 0, 0.32);
+  color: var(--mui-palette-text-primary, #101828);
   font-family: "Segoe UI", "Helvetica Neue", Helvetica, sans-serif;
 }
 
@@ -56,7 +56,7 @@
   border-radius: 0.625rem;
   font-size: 0.95rem;
   padding: 0.625rem 0.75rem;
-  color: #101828;
+  color: var(--mui-palette-text-primary, #101828);
   transition: border-color 120ms ease, box-shadow 120ms ease;
   box-shadow: var(--raf-shadow-sm);
 }
@@ -65,7 +65,7 @@
 .raf-select:focus {
   border-color: var(--raf-color-border-focus);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mui-palette-primary-main, #1976d2) 24%, transparent);
 }
 
 .raf-input:disabled,
@@ -220,6 +220,7 @@
   clip: rect(0, 0, 0, 0);
   overflow: hidden;
 }
+
 
 .raf-button-row[aria-label$="type chooser"] {
   flex-wrap: wrap;
@@ -596,4 +597,214 @@
     max-height: none;
     height: calc(100% - 3.5rem);
   }
+}
+
+/* Consume MUI CSS variables when a host application provides them. */
+.raf-schema-form {
+  --raf-mui-surface: var(--mui-palette-background-paper, #ffffff);
+  --raf-mui-surface-alt: var(--mui-palette-background-default, #f8f9fb);
+  --raf-mui-text: var(--mui-palette-text-primary, #101828);
+  --raf-mui-muted: var(--mui-palette-text-secondary, #6c7684);
+  --raf-mui-border: var(--mui-palette-divider, #d9dce1);
+  --raf-mui-primary: var(--mui-palette-primary-main, #1976d2);
+  --raf-mui-secondary: var(--mui-palette-secondary-main, #667085);
+  --raf-mui-error: var(--mui-palette-error-main, #b42318);
+}
+
+.raf-schema-form .raf-input,
+.raf-schema-form .raf-select,
+.raf-schema-form .raf-array-item,
+.raf-schema-form .raf-info-button,
+.raf-schema-form .raf-builder-control,
+.raf-schema-form .raf-info-modal,
+.raf-schema-form .raf-helper-panel {
+  background: var(--raf-mui-surface);
+  border-color: var(--raf-mui-border);
+  color: var(--raf-mui-text);
+}
+
+.raf-schema-form .raf-object,
+.raf-schema-form .raf-builder-block,
+.raf-schema-form .raf-typeahead-menu,
+.raf-schema-form .raf-json-preview {
+  background: var(--raf-mui-surface-alt);
+  border-color: var(--raf-mui-border);
+  color: var(--raf-mui-text);
+}
+
+.raf-schema-form .raf-field-label,
+.raf-schema-form .raf-object-summary,
+.raf-schema-form .raf-builder-heading,
+.raf-schema-form .raf-helper-title,
+.raf-schema-form .raf-helper-subtitle,
+.raf-schema-form .raf-info-modal-header,
+.raf-schema-form .raf-info-modal-body,
+.raf-schema-form .raf-builder-control {
+  color: var(--raf-mui-text);
+}
+
+.raf-schema-form .raf-field-summary,
+.raf-schema-form .raf-field-optional,
+.raf-schema-form .raf-muted,
+.raf-schema-form .raf-loading-state,
+.raf-schema-form .raf-helper-empty {
+  color: var(--raf-mui-muted);
+}
+
+.raf-schema-form .raf-input:focus,
+.raf-schema-form .raf-select:focus,
+.raf-schema-form .raf-textarea:focus,
+.raf-schema-form .raf-builder-control:focus,
+.raf-schema-form .raf-info-button:focus {
+  border-color: var(--raf-mui-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--raf-mui-primary) 24%, transparent);
+}
+
+.raf-schema-form .raf-button-primary,
+.raf-schema-builder .raf-button-primary,
+.raf-schema-form .raf-button-row[aria-label$="type chooser"] .raf-button[aria-pressed="true"] {
+  background: var(--raf-mui-primary);
+  color: #ffffff;
+}
+
+.raf-schema-form .raf-button-secondary {
+  background: color-mix(in srgb, var(--raf-mui-secondary) 18%, var(--raf-mui-surface));
+  color: var(--raf-mui-secondary);
+  border-color: var(--raf-mui-secondary);
+}
+
+.raf-schema-form .raf-info-button {
+  background: var(--raf-mui-surface-alt);
+  color: var(--raf-mui-text);
+  border-color: var(--raf-mui-border);
+}
+
+.raf-schema-form .raf-button-danger,
+.raf-schema-form .raf-error {
+  background: color-mix(in srgb, var(--raf-mui-error) 18%, var(--raf-mui-surface));
+  border-color: var(--raf-mui-error);
+  color: var(--raf-mui-error);
+}
+
+.raf-schema-builder,
+.raf-helper-panel {
+  --raf-mui-surface: var(--mui-palette-background-paper, #ffffff);
+  --raf-mui-surface-alt: var(--mui-palette-background-default, #f8f9fb);
+  --raf-mui-text: var(--mui-palette-text-primary, #101828);
+  --raf-mui-muted: var(--mui-palette-text-secondary, #6c7684);
+  --raf-mui-border: var(--mui-palette-divider, #d9dce1);
+  --raf-mui-primary: var(--mui-palette-primary-main, #1976d2);
+  --raf-mui-secondary: var(--mui-palette-secondary-main, #667085);
+  --raf-mui-error: var(--mui-palette-error-main, #b42318);
+  color: var(--raf-mui-text);
+}
+
+.raf-schema-builder .raf-builder-block,
+.raf-schema-builder .raf-builder-property,
+.raf-schema-builder .raf-builder-disclosure,
+.raf-schema-builder .raf-typeahead-menu,
+.raf-helper-panel .raf-helper-results,
+.raf-helper-panel .raf-helper-snippet,
+.raf-schema-builder .raf-info-modal,
+.raf-helper-panel .raf-info-modal {
+  background: var(--raf-mui-surface-alt);
+  border-color: var(--raf-mui-border);
+  color: var(--raf-mui-text);
+}
+
+.raf-schema-builder .raf-input,
+.raf-schema-builder .raf-select,
+.raf-schema-builder .raf-textarea,
+.raf-schema-builder .raf-builder-control,
+.raf-helper-panel .raf-input,
+.raf-helper-panel .raf-builder-control {
+  background: var(--raf-mui-surface);
+  border-color: var(--raf-mui-border);
+  color: var(--raf-mui-text);
+}
+
+.raf-schema-builder .raf-field-label,
+.raf-schema-builder .raf-object-summary,
+.raf-schema-builder .raf-builder-heading,
+.raf-schema-builder .raf-builder-disclosure-summary,
+.raf-helper-panel .raf-helper-title,
+.raf-helper-panel .raf-helper-snippet-body,
+.raf-schema-builder .raf-info-modal-body,
+.raf-helper-panel .raf-info-modal-body {
+  color: var(--raf-mui-text);
+}
+
+.raf-schema-builder .raf-field-summary,
+.raf-schema-builder .raf-field-optional,
+.raf-helper-panel .raf-helper-subtitle,
+.raf-helper-panel .raf-helper-empty {
+  color: var(--raf-mui-muted);
+}
+
+.raf-helper-panel .raf-helper-snippet-keyword,
+.raf-schema-builder .raf-info-link {
+  color: var(--raf-mui-primary);
+}
+
+.raf-helper-panel .raf-helper-snippet-body strong {
+  color: var(--raf-mui-text);
+}
+
+.raf-schema-builder .raf-typeahead-option {
+  color: var(--raf-mui-text);
+}
+
+.raf-schema-builder .raf-typeahead-option:hover,
+.raf-schema-builder .raf-typeahead-option[aria-selected="true"] {
+  background: color-mix(in srgb, var(--raf-mui-primary) 18%, var(--raf-mui-surface));
+  color: var(--raf-mui-text);
+}
+
+.raf-schema-builder .raf-textarea:focus,
+.raf-schema-builder .raf-builder-control:focus,
+.raf-helper-panel .raf-builder-control:focus {
+  border-color: var(--raf-mui-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--raf-mui-primary) 24%, transparent);
+}
+
+.raf-info-modal {
+  --raf-mui-surface: var(--mui-palette-background-paper, #ffffff);
+  --raf-mui-surface-alt: var(--mui-palette-background-default, #f8fafc);
+  --raf-mui-text: var(--mui-palette-text-primary, #344054);
+  --raf-mui-border: var(--mui-palette-divider, #cfd7e3);
+  --raf-mui-primary: var(--mui-palette-primary-main, #1976d2);
+  --raf-mui-secondary: var(--mui-palette-secondary-main, #667085);
+  --raf-mui-error: var(--mui-palette-error-main, #b42318);
+  background: var(--raf-mui-surface);
+  border-color: var(--raf-mui-border);
+  color: var(--raf-mui-text);
+}
+
+.raf-info-modal .raf-info-modal-header {
+  background: var(--raf-mui-surface-alt);
+  border-bottom-color: var(--raf-mui-border);
+  color: var(--raf-mui-text);
+}
+
+.raf-info-modal .raf-info-modal-body,
+.raf-info-modal .raf-info-modal-body p {
+  color: var(--raf-mui-text);
+}
+
+.raf-info-modal .raf-info-link {
+  color: var(--raf-mui-primary);
+}
+
+.raf-schema-builder .raf-builder-add-property {
+  background: var(--raf-mui-primary);
+  border-color: var(--raf-mui-primary);
+  color: #ffffff;
+}
+
+.raf-schema-builder .raf-button-secondary,
+.raf-schema-builder .raf-info-button,
+.raf-info-modal .raf-button-secondary {
+  background: color-mix(in srgb, var(--raf-mui-secondary, var(--raf-mui-error)) 18%, var(--raf-mui-surface));
+  border-color: var(--raf-mui-secondary, var(--raf-mui-error));
+  color: var(--raf-mui-secondary, var(--raf-mui-error));
 }

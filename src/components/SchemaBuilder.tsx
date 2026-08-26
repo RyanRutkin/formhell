@@ -1269,7 +1269,7 @@ function ObjectSchemaEditor({
 
       <div className="raf-button-row">
         <button
-          className="raf-button raf-button-primary"
+          className="raf-button raf-button-primary raf-builder-add-property"
           type="button"
           onClick={() => {
             const next = cloneSchema(schema);
@@ -1640,7 +1640,7 @@ function ArraySchemaEditor({ schema, onChange }: { schema: JSONSchema; onChange:
 
           <div className="raf-button-row">
             <button
-              className="raf-button raf-button-primary"
+              className="raf-button raf-button-secondary"
               type="button"
               onClick={() => {
                 const next = cloneSchema(schema);
@@ -1912,7 +1912,7 @@ function CombinationEditor({
 
       <div className="raf-button-row">
         <button
-          className="raf-button raf-button-primary"
+          className="raf-button raf-button-secondary"
           type="button"
           onClick={() => {
             const next = cloneSchema(schema);
@@ -1946,7 +1946,7 @@ function ConditionalSchemaEditor({
       <div className="raf-button-row">
         {!entry ? (
           <button
-            className="raf-button raf-button-primary"
+            className="raf-button raf-button-secondary"
             type="button"
             onClick={() => {
               const next = cloneSchema(schema);
@@ -2009,7 +2009,7 @@ function SingleSchemaEditor({
       <div className="raf-button-row">
         {!entry ? (
           <button
-            className="raf-button raf-button-primary"
+            className="raf-button raf-button-secondary"
             type="button"
             onClick={() => {
               const next = cloneSchema(schema);
@@ -2240,7 +2240,7 @@ function FieldLabel({
       <div className="raf-field-label-row">
         {labelType === "heading" ? <h4 className="raf-builder-heading">{label}</h4> : <span className="raf-field-label">{label}</span>}
         <button
-          className="raf-info-button"
+          className="raf-info-button raf-button-secondary"
           type="button"
           aria-label={`Info about ${label}`}
           onClick={(event) => {

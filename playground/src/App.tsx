@@ -57,9 +57,12 @@ class FormErrorBoundary extends Component<{ children: ReactNode }, { message: st
   }
 }
 
-export default function App() {
+type ThemeMode = "hell" | "dark" | "light";
+
+export default function App({ themeMode = "hell", onThemeToggle }: { themeMode?: ThemeMode; onThemeToggle?: (mode: ThemeMode) => void }) {
   const [data, setData] = useState<OutputData>(initialProfileData);
-  const [lastEvent, setLastEvent] = useState("No changes yet.");
+  const [lastEventLabel, setLastEventLabel] = useState("No changes yet.");
+  const [lastEventDetail, setLastEventDetail] = useState("");
   const [showcaseMode, setShowcaseMode] = useState<"form" | "builder">("form");
   const [builderSchema, setBuilderSchema] = useState<JSONSchema | null>(null);
   const [builderSidebarView, setBuilderSidebarView] = useState<"assistant" | "form" | "schema">("assistant");
@@ -265,10 +268,28 @@ export default function App() {
   }, [schemaRequestState]);
 
   return (
-    <div className="play-root">
+    <div className={`play-root play-root-${themeMode}`}>
       <header className="play-header">
-        <h1>FormHell Playground</h1>
+        <div className="play-header-brand">
+          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="play-header-icon" />
+          <h1>FormHell Playground</h1>
+        </div>
         <p>Interactive environment for testing SchemaForm behavior and previewing SchemaBuilder export.</p>
+        <div className="play-theme-toggle" role="radiogroup" aria-label="Theme" data-theme-mode={themeMode}>
+          {(["hell", "dark", "light"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              className="play-theme-option"
+              role="radio"
+              aria-checked={themeMode === mode}
+              onClick={() => onThemeToggle?.(mode)}
+            >
+              {mode === "hell" ? "Hell" : mode === "dark" ? "Dark" : "Light"}
+            </button>
+          ))}
+          <span className="play-theme-thumb" aria-hidden="true" />
+        </div>
         <div className="play-header-guides" aria-label="Documentation guides">
           <a href="/formhell/react-json-schema-form-refs" className="play-header-guide-link">
             Guide: React JSON Schema Form Refs
@@ -345,7 +366,8 @@ export default function App() {
                     ) => {
                       setFormValidationErrors(validationErrors);
                       setData(nextData);
-                      setLastEvent(`Changed ${fieldPointer || "/"}: ${JSON.stringify(prev)} -> ${JSON.stringify(next)}`);
+                      setLastEventLabel(`Changed ${fieldPointer || "/"}:`);
+                      setLastEventDetail(`${JSON.stringify(prev)} -> ${JSON.stringify(next)}`);
                     }}
                   />
                 </FormErrorBoundary>
@@ -358,7 +380,8 @@ export default function App() {
 
             <section className="play-panel">
               <h2>Result Data</h2>
-              <div className="play-event">{lastEvent}</div>
+              <div className="play-event">{lastEventLabel}</div>
+              {lastEventDetail ? <div className="play-event-detail">{lastEventDetail}</div> : null}
               <pre className="play-json">{prettyData}</pre>
             </section>
           </>
