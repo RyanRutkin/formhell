@@ -36,9 +36,9 @@ Here's a quick comparison for using FormHell instead of some other headache libr
 | Async missing `$ref` loading | Yes (`getSchema`) | Often limited or app-specific |
 | Peer schema document support | Yes | Varies |
 | Draft 2020-12 oriented workflows | Yes | Varies by implementation |
-| Advanced keywords (`if/then/else`, `dependentSchemas`, `unevaluated*`) | Designed for this | None that I've found |
+| Advanced keywords (`if/then/else`, `dependentSchemas`, `unevaluated*`) | Yea - Designed for this | None that I've found |
 | Widget overrides by pointer and type | Yes | Usually type-only or custom plumbing |
-| Defaults strategy control | Yes (`all` / `required-only`) | Often limited and supper broken |
+| Defaults strategy control | Yes (`all` / `required-only`) | Often limited and super broken |
 | Validation feedback on every change | Yes | Usually yes |
 
 If your form requirements include deep JSON Schema support and your timeline includes "this quarter," this matrix is the point.
