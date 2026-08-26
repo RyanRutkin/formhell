@@ -65,6 +65,63 @@ import { SchemaForm, SchemaBuilder, SchemaBuilderHelper } from "formhell";
 import "formhell/styles.css";
 ```
 
+## Theming
+
+FormHell does not depend on Material UI or any other styling framework. Importing `formhell/styles.css` gives the components a complete default theme, so the library works without a provider or theme package.
+
+The components are also designed to participate in a host application's theme. Their styles use CSS custom properties with fallbacks, which means an application can override the FormHell variables at any scope that contains a `SchemaForm`, `SchemaBuilder`, or `SchemaBuilderHelper`:
+
+```css
+.checkout-form {
+  --raf-color-border: #6b7280;
+  --raf-color-border-focus: #0f766e;
+  --raf-color-label: #102a43;
+  --raf-color-muted: #52657a;
+  --raf-color-surface: #ffffff;
+  --raf-color-surface-alt: #f3f6fb;
+  --raf-color-danger: #b42318;
+}
+```
+
+### Optional Material UI integration
+
+When a Material UI theme is present, FormHell automatically consumes MUI's generated CSS variables. Create the theme with `cssVariables: true` and place the FormHell components inside the `ThemeProvider`:
+
+```tsx
+import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { SchemaForm } from "formhell";
+import "formhell/styles.css";
+
+const theme = createTheme({
+  cssVariables: true,
+  palette: {
+    primary: { main: "#1976d2" },
+    secondary: { main: "#526d82" },
+    error: { main: "#b42318" },
+    background: { default: "#f3f6fb", paper: "#ffffff" },
+    text: { primary: "#172b4d", secondary: "#52657a" }
+  }
+});
+
+<ThemeProvider theme={theme}>
+  <CssBaseline />
+  <SchemaForm schema={schema} />
+</ThemeProvider>;
+```
+
+FormHell maps the available MUI variables to its component roles:
+
+- `background.paper` controls form inputs, builder controls, modals, and helper surfaces.
+- `background.default` controls nested objects, builder sections, typeahead menus, and previews.
+- `text.primary` controls labels, headings, input text, and body content.
+- `text.secondary` controls optional labels, summaries, muted copy, and empty states.
+- `divider` controls borders.
+- `primary.main` controls primary actions, focus rings, selected type buttons, and links.
+- `secondary.main` controls secondary actions such as Add Type, info buttons, and tooltip Close buttons.
+- `error.main` controls danger actions, validation errors, and error states.
+
+MUI is intentionally not listed as a FormHell dependency. Applications that use another theme system can provide the same CSS custom properties, and applications without a theme continue using FormHell's built-in fallbacks.
+
 ## Exported Components At A Glance
 
 - `SchemaForm`: Render data-entry forms from JSON Schema.
