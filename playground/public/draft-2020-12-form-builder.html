@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Draft 2020-12 Form Builder for React | formhell</title>
+    <meta
+      name="description"
+      content="Build Draft 2020-12 JSON Schema forms in React with formhell. Learn visual schema editing, advanced keywords, and live SchemaBuilder + SchemaForm workflows."
+    />
+    <meta
+      name="keywords"
+      content="draft 2020-12 form builder, react json schema builder, schemabuilder react, formhell"
+    />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://ryanrutkin.github.io/formhell/draft-2020-12-form-builder" />
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Helvetica Neue", Helvetica, sans-serif;
+        color: #0f172a;
+        background: #f8fafc;
+      }
+
+      main {
+        max-width: 52rem;
+        margin: 0 auto;
+        padding: 2rem 1rem 3rem;
+      }
+
+      h1,
+      h2 {
+        color: #0b3c6d;
+      }
+
+      pre {
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        overflow: auto;
+      }
+
+      a {
+        color: #0d5ea8;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Draft 2020-12 Form Builder for React</h1>
+      <p>
+        Want a visual JSON Schema builder without sacrificing advanced Draft 2020-12 keywords? That is exactly the
+        lane for <strong>formhell</strong>.
+      </p>
+
+      <h2>Builder + live form preview pattern</h2>
+      <pre><code>&lt;SchemaBuilder
+  domain="https://example.com/schemas/"
+  onChange={(nextSchema) =&gt; setSchema(nextSchema)}
+/&gt;
+
+&lt;SchemaForm schema={schema} /&gt;</code></pre>
+
+      <h2>Keywords you can model</h2>
+      <ul>
+        <li><code>allOf</code>, <code>anyOf</code>, <code>oneOf</code>, <code>not</code></li>
+        <li><code>if</code>, <code>then</code>, <code>else</code></li>
+        <li><code>dependentRequired</code>, <code>dependentSchemas</code></li>
+        <li><code>unevaluatedItems</code>, <code>unevaluatedProperties</code></li>
+        <li><code>propertyNames</code>, <code>patternProperties</code></li>
+      </ul>
+
+      <h2>Related resources</h2>
+      <ul>
+        <li><a href="/formhell/">formhell home and playground</a></li>
+        <li><a href="/formhell/react-json-schema-form-refs">React JSON Schema Form Refs Guide</a></li>
+        <li><a href="https://github.com/RyanRutkin/formhell">GitHub repository</a></li>
+        <li><a href="https://www.npmjs.com/package/formhell">npm package</a></li>
+      </ul>
+    </main>
+  </body>
+</html>

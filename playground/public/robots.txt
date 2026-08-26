@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ryanrutkin.github.io/formhell/sitemap.xml

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>formhell: React JSON Schema Form + Schema Builder (Draft 2020-12)</title>
+    <meta
+      name="description"
+      content="formhell is a robust and easy-to-use React JSON Schema form and schema builder library with strong draft 2020-12 support, advanced $ref handling, and excellent defaults behavior."
+    />
+    <meta
+      name="keywords"
+      content="React JSON Schema form, JSON Schema builder, draft 2020-12, formhell, dynamic forms, schema-driven forms, AJV, $ref resolution"
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://ryanrutkin.github.io/formhell/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="formhell" />
+    <meta property="og:title" content="formhell: React JSON Schema Form + Schema Builder" />
+    <meta
+      property="og:description"
+      content="Build and render advanced JSON Schema forms in React with robust $ref support, draft 2020-12 coverage, and practical defaults handling."
+    />
+    <meta property="og:url" content="https://ryanrutkin.github.io/formhell/" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="formhell: React JSON Schema Form + Schema Builder" />
+    <meta
+      name="twitter:description"
+      content="A robust and easy-to-use React JSON Schema form library with visual schema building and strong modern schema support."
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": "formhell",
+        "codeRepository": "https://github.com/RyanRutkin/formhell",
+        "programmingLanguage": "TypeScript",
+        "runtimePlatform": "Web Browser",
+        "license": "https://spdx.org/licenses/MIT.html",
+        "url": "https://ryanrutkin.github.io/formhell/",
+        "description": "React JSON Schema form and schema builder library with draft 2020-12 support, advanced $ref resolution, and strong defaults handling.",
+        "keywords": [
+          "React JSON Schema form",
+          "JSON Schema builder",
+          "schema-driven forms",
+          "draft 2020-12",
+          "AJV"
+        ],
+        "author": {
+          "@type": "Person",
+          "name": "Ryan Rutkin"
+        }
+      }
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does formhell support modern JSON Schema features like draft 2020-12 and $ref?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. formhell supports draft 2020-12 workflows and includes robust reference resolution with peer schema support and asynchronous schema loading."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I visually build schemas and preview forms at the same time?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. formhell includes a SchemaBuilder for visual schema authoring and a SchemaForm that can render live from that output in the playground."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I customize field rendering in SchemaForm?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. You can override widgets by schema pointer for exact fields or by schema type for reusable global behavior."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does formhell handle default values compared with basic schema form generators?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "formhell provides explicit defaults strategies and is designed to behave predictably in complex real-world schemas where simple default handling often breaks down."
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

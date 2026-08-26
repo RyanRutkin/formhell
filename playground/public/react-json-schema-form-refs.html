@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>React JSON Schema Form Refs Guide | formhell</title>
+    <meta
+      name="description"
+      content="Learn how to handle $ref in a React JSON Schema form with formhell, including peer schemas, async schema loading, and robust reference resolution patterns."
+    />
+    <meta
+      name="keywords"
+      content="react json schema form refs, react json schema form $ref, peer schemas, async schema loading, formhell"
+    />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://ryanrutkin.github.io/formhell/react-json-schema-form-refs" />
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Helvetica Neue", Helvetica, sans-serif;
+        color: #0f172a;
+        background: #f8fafc;
+      }
+
+      main {
+        max-width: 52rem;
+        margin: 0 auto;
+        padding: 2rem 1rem 3rem;
+      }
+
+      h1,
+      h2 {
+        color: #0b3c6d;
+      }
+
+      pre {
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        overflow: auto;
+      }
+
+      a {
+        color: #0d5ea8;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>React JSON Schema Form Refs Guide</h1>
+      <p>
+        If your schema has <code>$ref</code> and your current form stack gives you a dramatic runtime monologue,
+        this page is for you.
+      </p>
+
+      <p>
+        <strong>formhell</strong> supports peer schemas, async schema fetches, and modern JSON Schema workflows so
+        reference-heavy forms stay predictable.
+      </p>
+
+      <h2>Basic peer schema pattern</h2>
+      <pre><code>&lt;SchemaForm
+  schema={mainSchema}
+  peerSchemas={[addressSchema, countrySchema]}
+/&gt;</code></pre>
+
+      <h2>Async missing-schema pattern</h2>
+      <pre><code>&lt;SchemaForm
+  schema={mainSchema}
+  getSchema={async (requestedSchema) =&gt; {
+    const response = await fetch(`/api/schema?ref=${encodeURIComponent(requestedSchema)}`);
+    if (!response.ok) throw new Error("Unable to load schema");
+    return await response.json();
+  }}
+/&gt;</code></pre>
+
+      <h2>Related resources</h2>
+      <ul>
+        <li><a href="/formhell/">formhell home and playground</a></li>
+        <li><a href="/formhell/draft-2020-12-form-builder">Draft 2020-12 Form Builder Guide</a></li>
+        <li><a href="https://github.com/RyanRutkin/formhell">GitHub repository</a></li>
+        <li><a href="https://www.npmjs.com/package/formhell">npm package</a></li>
+      </ul>
+    </main>
+  </body>
+</html>
