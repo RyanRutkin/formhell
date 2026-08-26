@@ -1,6 +1,6 @@
 # formhell
 
-React Autological Forms for React.
+Finally escape form hell with FormHell
 
 Incredibly robust yet remarkably simple JSON Schema based forms for React.
 
@@ -8,9 +8,15 @@ Incredibly robust yet remarkably simple JSON Schema based forms for React.
 
 I wrote this library out of pure JSON Schema fatigue.
 
-Specifically, I was frustrated by how the leading JSON Schema form libraries (including react-json-schema-forms) often fall short once schemas get complex, and how defaults behavior can become surprisingly unhelpful in real applications.
+Specifically, I was frustrated by how the leading JSON Schema form libraries (mainly react-json-schema-forms) often fall short once schemas get complex, and how defaults behavior can become surprisingly unhelpful in real applications.
 
 I wanted strong support for modern JSON Schema behavior, including deeper keyword combinations, robust `$ref` flows, and sensible defaults behavior. Many popular schema-form approaches feel great for simple demos, then quickly become awkward when you need advanced schema features, strict correctness, or predictable default handling.
+
+Yea, you'll find a nice JSON Schema based form library that works great for a toy example to make stakeholders go "Wow, it works." Then your project will be riddled with bugs a year in when schemas start getting complex. You'll be pulling your hair out wondering "why is it generating arrays with null entries, or inserting '[Object object]' into my data! What experimental setting do I need to turn on to make this thing behave correctly?!"
+
+Enough of that. This thing works the way you expect it to. It handles every complex schema thing you'll ever need. Don't have complex schemas? Cool, it handles simple ones.
+
+Don't fully understand how to build a schema yet? Use the schema builder! This thing even comes with a keyword helper component to help you find what you're looking for. Check it out in the playground: https://ryanrutkin.github.io/formhell/
 
 formhell exists to be both:
 
@@ -21,7 +27,7 @@ In short: this is built to be the most robust and still easy-to-use JSON Schema 
 
 ## Comparison Snapshot
 
-The goal here is not drama. The goal is practical capability when schemas stop being toy examples.
+Here's a quick comparison for using FormHell instead of some other headache library.
 
 | Capability | formhell | Typical basic JSON Schema form setup |
 | --- | --- | --- |
@@ -30,9 +36,9 @@ The goal here is not drama. The goal is practical capability when schemas stop b
 | Async missing `$ref` loading | Yes (`getSchema`) | Often limited or app-specific |
 | Peer schema document support | Yes | Varies |
 | Draft 2020-12 oriented workflows | Yes | Varies by implementation |
-| Advanced keywords (`if/then/else`, `dependentSchemas`, `unevaluated*`) | Designed for this | Often partial |
+| Advanced keywords (`if/then/else`, `dependentSchemas`, `unevaluated*`) | Designed for this | None that I've found |
 | Widget overrides by pointer and type | Yes | Usually type-only or custom plumbing |
-| Defaults strategy control | Yes (`all` / `required-only`) | Often limited |
+| Defaults strategy control | Yes (`all` / `required-only`) | Often limited and supper broken |
 | Validation feedback on every change | Yes | Usually yes |
 
 If your form requirements include deep JSON Schema support and your timeline includes "this quarter," this matrix is the point.

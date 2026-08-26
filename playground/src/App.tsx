@@ -267,7 +267,7 @@ export default function App() {
   return (
     <div className="play-root">
       <header className="play-header">
-        <h1>formhell Playground</h1>
+        <h1>FormHell Playground</h1>
         <p>Interactive environment for testing SchemaForm behavior and previewing SchemaBuilder export.</p>
         <div className="play-header-guides" aria-label="Documentation guides">
           <a href="/formhell/react-json-schema-form-refs" className="play-header-guide-link">
