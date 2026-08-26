@@ -1,7 +1,7 @@
 {
   "name": "formhell",
   "author": "Ryan Rutkin",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "React JSON Schema form and schema builder library with draft 2020-12 support, robust $ref resolution, and strong defaults handling",
   "license": "MIT",
   "main": "dist/index.cjs",

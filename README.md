@@ -1,10 +1,8 @@
-# formhell
+# formhell <img src="favicon.svg" alt="FormHell icon" width="32" height="32" />
 
 Finally escape form hell with FormHell
 
 Incredibly robust yet remarkably simple JSON Schema based forms for React.
-
-![FormHell icon](favicon.svg)
 
 ## Why This Library Exists
 
@@ -42,6 +40,7 @@ Here's a quick comparison for using FormHell instead of some other headache libr
 | Widget overrides by pointer and type | Yes | Usually type-only or custom plumbing |
 | Defaults strategy control | Yes (`all` / `required-only`) | Often limited and super broken |
 | Validation feedback on every change | Yes | Usually yes |
+| Optional MUI or custom theming | Yes | Usually yes |
 
 If your form requirements include deep JSON Schema support and your timeline includes "this quarter," this matrix is the point.
 
