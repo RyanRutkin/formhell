@@ -9,6 +9,7 @@ import { SchemaFormSelect } from "./fields/SchemaFormSelect";
 import { SchemaFormString } from "./fields/SchemaFormString";
 import type { FieldComponentProps, SchemaFormArrayProps, SchemaFormObjectProps, SchemaFormWidgets } from "../types/components";
 import type { JSONSchema, JSONSchemaType } from "../types/schema";
+import { useFormHellLocale } from "../i18n/LocaleProvider";
 import { createDefaultValueFromSchema } from "../utils/defaultData";
 import { joinPointer } from "../utils/jsonPointer";
 
@@ -26,6 +27,7 @@ interface SchemaFieldRendererProps {
 
 export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
   const { schema, label, required, pointer, schemaPointer, value, onChange, widgets, controls } = props;
+  const { formatMessage } = useFormHellLocale();
   const hasConstValue = Object.prototype.hasOwnProperty.call(schema, "const");
   const lockedValue = hasConstValue ? schema.const : value;
   const isConstLocked = hasConstValue;
@@ -64,7 +66,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
   }, [inferredType, schemaTypes, selectedType]);
 
   const typeChooser = hasTypeChoices && !hasEnum ? (
-    <div className="raf-button-row" aria-label={`${label} type chooser`}>
+    <div className="raf-button-row" aria-label={formatMessage("field.typeChooser", { label })}>
       {schemaTypes
         .filter((choice) => choice !== "null")
         .map((choice) => (
@@ -94,7 +96,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
             onChange(pointer, null);
           }}
         >
-          Insert NULL
+          {formatMessage("field.insertNull")}
         </button>
       ) : null}
     </div>
@@ -180,7 +182,11 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
         renderItem={(index, itemPointer, itemValue) => (
           <SchemaFieldRenderer
             schema={tupleItems?.[index] ?? singleItemsSchema ?? { type: "string" }}
-            label={tupleItems?.[index]?.title?.trim() ? (tupleItems[index].title as string) : tupleItems ? `Tuple ${index + 1}` : `Item ${index + 1}`}
+            label={
+              tupleItems?.[index]?.title?.trim()
+                ? (tupleItems[index].title as string)
+                : formatMessage(tupleItems ? "array.tupleLabel" : "array.itemLabel", { index: index + 1 })
+            }
             required={true}
             pointer={itemPointer}
             schemaPointer={tupleItems ? joinPointer(joinPointer(schemaPointer, "prefixItems"), String(index)) : joinPointer(schemaPointer, "items")}

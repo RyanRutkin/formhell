@@ -1,7 +1,9 @@
 import type { FieldComponentProps } from "../../types/components";
+import { useFormHellLocale } from "../../i18n/LocaleProvider";
 import { FieldShell } from "./FieldShell";
 
 export function SchemaFormSelect({ label, required, schema, value, disabled, controls, onChange }: FieldComponentProps<unknown>) {
+  const { formatMessage } = useFormHellLocale();
   const options = Array.isArray(schema.enum) ? schema.enum : [];
   const selectedValue = encodeEnumValue(value);
 
@@ -13,7 +15,7 @@ export function SchemaFormSelect({ label, required, schema, value, disabled, con
         disabled={disabled}
         onChange={(event) => onChange(decodeEnumValue(event.target.value))}
       >
-        {!required ? <option value="">Select...</option> : null}
+        {!required ? <option value="">{formatMessage("select.placeholder")}</option> : null}
         {options.map((option) => (
           <option key={encodeEnumValue(option)} value={encodeEnumValue(option)}>
             {String(option)}
