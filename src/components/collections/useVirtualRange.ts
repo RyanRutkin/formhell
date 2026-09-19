@@ -7,6 +7,14 @@ export interface VirtualRange {
   getItemOffset: (index: number) => number;
 }
 
+export interface VirtualRangeCalculationOptions {
+  count: number;
+  sizes: readonly number[];
+  scrollOffset: number;
+  viewportSize: number;
+  overscan: number;
+}
+
 interface UseVirtualRangeOptions {
   count: number;
   estimateSize: number;
@@ -34,23 +42,10 @@ export function useVirtualRange({ count, estimateSize, overscan, initialViewport
     return next;
   }, [count, sizes]);
 
-  const range = useMemo<VirtualRange>(() => {
-    if (count === 0) {
-      return { startIndex: 0, endIndex: -1, totalSize: 0, getItemOffset: () => 0 };
-    }
-
-    const firstVisible = findIndexAtOffset(offsets, Math.max(0, scrollOffset));
-    const lastVisible = findIndexAtOffset(offsets, Math.max(0, scrollOffset + Math.max(0, viewportSize)));
-    const startIndex = Math.max(0, firstVisible - safeOverscan);
-    const endIndex = Math.min(count - 1, lastVisible + safeOverscan);
-
-    return {
-      startIndex,
-      endIndex,
-      totalSize: offsets[count],
-      getItemOffset: (index) => offsets[Math.max(0, Math.min(index, count))]
-    };
-  }, [count, offsets, safeOverscan, scrollOffset, viewportSize]);
+  const range = useMemo(
+    () => calculateVirtualRange({ count, sizes, scrollOffset, viewportSize, overscan: safeOverscan }),
+    [count, safeOverscan, scrollOffset, sizes, viewportSize]
+  );
 
   const setScrollElement = useCallback((element: HTMLDivElement | null) => {
     scrollElementRef.current = element;
@@ -105,6 +100,40 @@ export function useVirtualRange({ count, estimateSize, overscan, initialViewport
   }, []);
 
   return { range, setScrollElement, onScroll, measure, scrollToIndex };
+}
+
+export function calculateVirtualRange({
+  count,
+  sizes,
+  scrollOffset,
+  viewportSize,
+  overscan
+}: VirtualRangeCalculationOptions): VirtualRange {
+  if (count === 0) {
+    return { startIndex: 0, endIndex: -1, totalSize: 0, getItemOffset: () => 0 };
+  }
+
+  const offsets = createOffsets(count, sizes);
+  const firstVisible = findIndexAtOffset(offsets, Math.max(0, scrollOffset));
+  const lastVisible = findIndexAtOffset(offsets, Math.max(0, scrollOffset + Math.max(0, viewportSize)));
+  const safeOverscan = Math.max(0, Math.floor(overscan));
+  const startIndex = Math.max(0, firstVisible - safeOverscan);
+  const endIndex = Math.min(count - 1, lastVisible + safeOverscan);
+
+  return {
+    startIndex,
+    endIndex,
+    totalSize: offsets[count],
+    getItemOffset: (index) => offsets[Math.max(0, Math.min(index, count))]
+  };
+}
+
+function createOffsets(count: number, sizes: readonly number[]): number[] {
+  const offsets = new Array<number>(count + 1).fill(0);
+  for (let index = 0; index < count; index += 1) {
+    offsets[index + 1] = offsets[index] + Math.max(1, sizes[index] ?? 1);
+  }
+  return offsets;
 }
 
 function findIndexAtOffset(offsets: number[], target: number): number {

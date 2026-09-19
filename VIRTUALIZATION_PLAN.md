@@ -525,6 +525,15 @@ Track before/after results for the Phase 0 fixtures:
 
 Virtualization should not be credited for improvements that actually come from unrelated validation or default-generation changes.
 
+### Test Coverage Progress
+
+Implemented:
+
+- Pure range tests for empty collections, start/middle/end positions, overscan, variable heights, invalid sizes, and collection-count changes.
+- Component tests for bounded mounting, threshold fallback, invalid configuration, scroll-to-index validation reveal, add/remove focus, live announcements, progressive objects, and stable unrelated row identity.
+
+The remaining performance-test work is real-browser measurement and scroll-trace collection; the deterministic range and component behavior coverage is in place.
+
 ## Decisions To Revisit
 
 - Final public option names.
