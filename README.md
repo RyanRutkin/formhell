@@ -123,6 +123,44 @@ Choose how aggressively defaults are generated.
 />
 ```
 
+#### `options.virtualization?: SchemaFormVirtualizationOptions`
+
+Virtualization is opt-in and is disabled by default. When enabled, FormHell virtualizes large homogeneous arrays while preserving the normal renderer for small arrays, tuple arrays, and nested arrays. The core package does not depend on TanStack.
+
+```tsx
+<SchemaForm
+  schema={schema}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: {
+        enabled: true,
+        threshold: 100,
+        height: "min(70vh, 36rem)",
+        estimateItemHeight: 160,
+        overscan: 4
+      }
+    }
+  }}
+/>;
+```
+
+Virtualization options:
+
+- `enabled`: Enables the built-in dependency-free virtualizer. Defaults to `false`.
+- `arrays.enabled`: Enables or disables array virtualization independently. Defaults to enabled when `virtualization.enabled` is `true`.
+- `arrays.threshold`: Minimum item count before virtualization activates. Smaller arrays use normal rendering. The default is `100`.
+- `arrays.height`: CSS height or positive pixel height for the collection viewport. The default is `"min(70vh, 36rem)"`. A bounded viewport is required so the virtualizer can calculate visible rows.
+- `arrays.estimateItemHeight`: Initial row-height estimate in pixels. It affects the initial scrollbar size before mounted rows are measured. The default is `160`.
+- `arrays.overscan`: Number of extra rows mounted before and after the visible range. Higher values improve fast-scroll continuity but increase rendering work. The default is `4`.
+- `objects.enabled` and `objects.threshold`: Reserved for future progressive/object virtualization work and currently do not enable object-property virtualization.
+
+The built-in implementation measures mounted rows and supports variable-height nested object content. Nested arrays are not automatically virtualized, so a deeply nested schema does not create a stack of nested scroll areas. This keeps mobile interaction manageable. On mobile, use a responsive height such as `min(70vh, 36rem)` and consider providing a larger/full-screen collection experience at the application level.
+
+Invalid numeric values are normalized to safe defaults. Tuple arrays (`prefixItems`) and arrays below the threshold remain on the normal rendering path.
+
+The virtualization adapter boundary is intentionally internal while this feature stabilizes. A future optional TanStack integration can provide a virtualizer or replace the full collection renderer without adding TanStack to the core `formhell` dependency graph.
+
 #### `peerSchemas?: JSONSchema[] | Record<string, JSONSchema>`
 
 Provide external schema documents for `$ref` resolution.

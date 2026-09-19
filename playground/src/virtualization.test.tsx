@@ -70,4 +70,29 @@ describe("Built-in array virtualization", () => {
     });
     expect(container.querySelectorAll(".raf-virtualized-collection").length).toBe(0);
   });
+
+  it("falls back safely when virtualization values are invalid", async () => {
+    const { container } = render(
+      <SchemaForm
+        schema={schema}
+        data={data}
+        options={{
+          virtualization: {
+            enabled: true,
+            arrays: {
+              threshold: Number.NaN,
+              height: 0,
+              estimateItemHeight: -10,
+              overscan: -3
+            }
+          }
+        }}
+      />
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll(".raf-virtualized-collection").length).toBe(1);
+    });
+    expect(container.querySelectorAll(".raf-virtualized-collection-item").length).toBeLessThan(data.records.length);
+  });
 });

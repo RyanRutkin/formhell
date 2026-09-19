@@ -267,6 +267,23 @@ Phase 2 is complete.
 
 Phase 3 remains responsible for finalizing and documenting the public API, validating configuration values, and deciding whether to expose a public virtualizer adapter.
 
+### Phase 3 Implementation Notes
+
+Phase 3 is complete.
+
+- Finalized `SchemaFormOptions.virtualization` as the public opt-in configuration.
+- Added safe normalization for thresholds, viewport heights, estimated row heights, and overscan values.
+- Kept virtualization disabled by default.
+- Added README documentation for every public option, defaults, supported array shapes, mobile behavior, nested-array behavior, and the future TanStack boundary.
+- Kept the virtualizer adapter internal while the contract stabilizes; no TanStack dependency was added.
+- Added tests for enabled large arrays, threshold fallback, and invalid configuration fallback.
+
+Validation completed:
+
+- 50 playground tests passed.
+- Library and playground typechecks passed.
+- Library and playground builds passed.
+
 ## Phase 3: Public Opt-In API
 
 ### Purpose
@@ -294,19 +311,19 @@ Expose the built-in virtualizer in a controlled, backward-compatible way.
 
 ### Tasks
 
-- Add the finalized virtualization types to `SchemaFormOptions`.
-- Keep virtualization disabled by default.
-- Support a conservative threshold.
-- Validate or normalize invalid height and numeric options.
-- Document unsupported cases such as tuple arrays.
+- [x] Add the finalized virtualization types to `SchemaFormOptions`.
+- [x] Keep virtualization disabled by default.
+- [x] Support a conservative threshold.
+- [x] Validate or normalize invalid height and numeric options.
+- [x] Document unsupported cases such as tuple arrays.
 - Add a future-compatible `virtualizer` or renderer injection point only if the Phase 1 contract is stable. Avoid exposing TanStack types.
 
 ### Exit Criteria
 
-- Existing consumers do not need changes.
-- Opt-in behavior is documented and tested.
-- Invalid configuration fails safely or falls back to normal rendering.
-- The built-in implementation has no new runtime dependency.
+- [x] Existing consumers do not need changes.
+- [x] Opt-in behavior is documented and tested.
+- [x] Invalid configuration fails safely or falls back to normal rendering.
+- [x] The built-in implementation has no new runtime dependency.
 
 
 ## Phase 4: Accessibility, Focus, and Mobile UX
@@ -459,7 +476,7 @@ Validation completed:
 - [x] Phase 0: performance baseline.
 - [x] Phase 1: internal collection boundary.
 - [x] Phase 2: built-in dependency-free virtualizer.
-- [ ] Phase 3: public opt-in API.
+- [x] Phase 3: public opt-in API.
 - [ ] Phase 4: accessibility, focus, and mobile UX.
 - [ ] Phase 5: progressive large-object handling.
 - [ ] Phase 6: future TanStack integration.

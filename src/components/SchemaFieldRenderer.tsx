@@ -18,6 +18,7 @@ import type { JSONSchema, JSONSchemaType } from "../types/schema";
 import { useFormHellLocale } from "../i18n/LocaleProvider";
 import { createDefaultValueFromSchema } from "../utils/defaultData";
 import { joinPointer } from "../utils/jsonPointer";
+import { resolveArrayVirtualizationOptions } from "../utils/virtualization";
 
 interface SchemaFieldRendererProps {
   schema: JSONSchema;
@@ -182,6 +183,12 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
         )
       : arrayValue;
     const canAddItem = tupleItems ? false : arrayValue.length < addLimit;
+    const virtualizationOptions = resolveArrayVirtualizationOptions(
+      virtualization,
+      arrayValue.length,
+      virtualizationDepth,
+      Boolean(tupleItems)
+    );
 
     return (
       <ArrayWidget
@@ -221,19 +228,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
         )}
         canAddItem={canAddItem}
         canRemoveItems={!tupleItems}
-        virtualization={
-          virtualization?.enabled === true &&
-          virtualizationDepth === 0 &&
-          virtualization.arrays?.enabled !== false &&
-          !tupleItems &&
-          arrayValue.length >= (virtualization.arrays?.threshold ?? 100)
-            ? {
-                height: virtualization.arrays?.height ?? "min(70vh, 36rem)",
-                estimateItemHeight: virtualization.arrays?.estimateItemHeight ?? 160,
-                overscan: virtualization.arrays?.overscan ?? 4
-              }
-            : undefined
-        }
+        virtualization={virtualizationOptions}
       />
     );
   }
