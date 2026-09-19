@@ -203,4 +203,25 @@ describe("Built-in array virtualization", () => {
     expect(await screen.findByText("optionalFour")).not.toBeNull();
     expect(screen.getByRole("button", { name: "Show fewer properties" })).not.toBeNull();
   });
+
+  it("preserves unrelated row identity when a field update deep-clones the data", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <SchemaForm schema={schema} data={{ records: [{ name: "First", value: 1 }, { name: "Second", value: 2 }] }} />
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll(".raf-array-item").length).toBe(2);
+    });
+
+    const inputsBefore = Array.from(container.querySelectorAll<HTMLInputElement>(".raf-array-item .raf-field:first-child .raf-input"));
+    await user.clear(inputsBefore[0]);
+    await user.type(inputsBefore[0], "Updated");
+
+    await waitFor(() => {
+      const inputsAfter = Array.from(container.querySelectorAll<HTMLInputElement>(".raf-array-item .raf-field:first-child .raf-input"));
+      expect(inputsAfter[1]).toBe(inputsBefore[1]);
+      expect(inputsAfter[1].value).toBe("Second");
+    });
+  });
 });

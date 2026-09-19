@@ -30,34 +30,45 @@ Use a two-level extension boundary:
 1. **Virtualizer adapter:** FormHell owns collection semantics and row rendering. The adapter calculates visible ranges, measures rows, and handles scrolling.
 2. **Future collection renderer boundary:** Reserved for a later plugin that may replace the entire collection renderer, including layout and item mounting. This is where a future `formhell-virtualization-tanstack` package can integrate TanStack without forcing TanStack on all consumers.
 
-The first implementation should use the first boundary only. The second boundary should influence internal component structure but should not be exposed as a fully supported public plugin API until the built-in implementation proves the required contracts.
+The first implementation should use the first boundary only. The second boundary should influence internal component structure but should not be exposed as a fully supported public full-renderer plugin API yet.
+
+Decision: the virtualizer adapter itself will become a supported public API before the TanStack plugin is implemented. The adapter will be designed from the already-proven Phase 2 behavior rather than exposing private hook or DOM details.
 
 ## Proposed Contracts
 
-The exact public types should be finalized during Phase 1, but the conceptual virtualizer contract is:
+The public adapter should use a factory/lifecycle contract. A factory gives each collection its own state and prevents consumers from accidentally sharing a mutable virtualizer between arrays:
 
 ```ts
+export interface FormHellVirtualizerFactory {
+  create(options: FormHellVirtualizerCreateOptions): FormHellVirtualizer;
+}
+
+export interface FormHellVirtualizerCreateOptions {
+  count: number;
+  estimateSize: number;
+  overscan: number;
+  getItemKey: (index: number) => string;
+  onRangeChange?: (range: VirtualizerRange) => void;
+}
+
 export interface VirtualizerRange {
   startIndex: number;
   endIndex: number;
   totalSize: number;
-  offset: number;
+  getItemOffset: (index: number) => number;
 }
 
 export interface FormHellVirtualizer {
-  getRange(options: {
-    count: number;
-    scrollOffset: number;
-    viewportSize: number;
-    estimateSize: number;
-    overscan: number;
-  }): VirtualizerRange;
-
+  getRange(scrollOffset: number, viewportSize: number): VirtualizerRange;
   measure(index: number, size: number): void;
   scrollToIndex?(index: number): void;
   dispose?(): void;
 }
 ```
+
+This is a target contract for the next API-design step, not a promise that these exact names are final. The final public version must document lifecycle ownership, measurement timing, range updates, error handling, stable keys, and whether `scrollToIndex` is required or optional.
+
+Stable identity decision: rendered rows now receive internal structural identity tokens derived from item content and occurrence, with pointer/index as a fallback. User data is never mutated with an identity property. An explicit consumer `itemKey` resolver remains a future API refinement for domain-level identity such as an `id` field.
 
 The internal collection renderer should be able to receive:
 
@@ -115,6 +126,40 @@ Initial default behavior:
 ```
 
 These defaults are a planning target. Final names and defaults should be settled after Phase 0 profiling and Phase 1 contract work.
+
+### Future: Path-Specific Array Configuration
+
+Path-specific configuration is an intentional future API goal, but it must not block the current core implementation. The first public API uses global array virtualization settings; a later release can add exact JSON Pointer and wildcard overrides for applications with mixed collection sizes:
+
+```tsx
+<SchemaForm
+  schema={schema}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: {
+        threshold: 100,
+        height: "min(70vh, 36rem)"
+      },
+      paths: {
+        "/orders": {
+          threshold: 50,
+          height: "70vh"
+        },
+        "/orders/*/lineItems": {
+          threshold: 200,
+          height: "60vh"
+        },
+        "/metadata/history": {
+          enabled: false
+        }
+      }
+    }
+  }}
+/>
+```
+
+Planned precedence is exact path, wildcard path, global array settings, then normal rendering. Wildcards are especially useful for repeated nested structures while allowing individual paths to opt out. This feature should be designed after the public adapter contract stabilizes and should not change the current core API.
 
 ## README Documentation Deliverable
 
@@ -265,7 +310,7 @@ Phase 2 is complete.
 - Added focused tests for bounded mounting and threshold fallback.
 - Extended the Phase 0 benchmark with an eager versus virtualized comparison: 250 outer rows versus 8 mounted virtual rows in the jsdom environment.
 
-Phase 3 remains responsible for finalizing and documenting the public API, validating configuration values, and deciding whether to expose a public virtualizer adapter.
+Phase 3 finalized the public virtualization options and validation. The next API-design task is to finalize and publish the supported virtualizer factory contract before implementing the TanStack package.
 
 ### Phase 3 Implementation Notes
 
@@ -275,7 +320,7 @@ Phase 3 is complete.
 - Added safe normalization for thresholds, viewport heights, estimated row heights, and overscan values.
 - Kept virtualization disabled by default.
 - Added README documentation for every public option, defaults, supported array shapes, mobile behavior, nested-array behavior, and the future TanStack boundary.
-- Kept the virtualizer adapter internal while the contract stabilizes; no TanStack dependency was added.
+- Kept TanStack out of the core package while reserving a public, library-owned virtualizer factory contract.
 - Added tests for enabled large arrays, threshold fallback, and invalid configuration fallback.
 
 Validation completed:
@@ -484,9 +529,9 @@ Virtualization should not be credited for improvements that actually come from u
 
 - Final public option names.
 - Whether `height` accepts CSS strings or requires a number.
-- Whether path-specific array configuration is needed in the first public release.
-- Whether the virtualizer adapter should be public immediately or remain internal through Phase 3.
+- Future path-specific array configuration with exact and wildcard paths is required, but is explicitly non-blocking for the current core implementation.
 - Stable identity for arrays whose items have no natural ID.
+- Future `itemKey` resolver semantics for domain-level identities and reorderable arrays.
 - Whether full-screen mobile mode belongs in core or a consumer-provided renderer.
 - The exact boundary between the future virtualizer adapter and full TanStack collection renderer.
 
