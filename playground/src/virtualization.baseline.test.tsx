@@ -80,4 +80,52 @@ describe.skipIf(!process.env.FORMHELL_BENCHMARK)("Virtualization baseline", () =
     expect(mountedRows).toBe(ITEM_COUNT);
     expect(commits.length).toBeGreaterThan(0);
   });
+
+  it("mounts only a visible window for an opted-in large array", async () => {
+    const commits: Array<{ phase: string; actualDuration: number }> = [];
+    const onRender: ProfilerOnRenderCallback = (_id, phase, actualDuration) => {
+      commits.push({ phase, actualDuration });
+    };
+
+    const { container } = render(
+      <Profiler id="virtualized-large-nested-form" onRender={onRender}>
+        <SchemaForm
+          schema={largeNestedSchema}
+          data={createLargeNestedData()}
+          options={{
+            virtualization: {
+              enabled: true,
+              arrays: {
+                threshold: 100,
+                height: 480,
+                estimateItemHeight: 160,
+                overscan: 4
+              }
+            }
+          }}
+        />
+      </Profiler>
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll(".raf-virtualized-collection").length).toBe(1);
+    });
+
+    const mountedRows = container.querySelectorAll(".raf-virtualized-collection-item").length;
+    const totalCommitDuration = commits.reduce((total, commit) => total + commit.actualDuration, 0);
+
+    console.info(
+      JSON.stringify({
+        itemCount: ITEM_COUNT,
+        mountedRows,
+        commitCount: commits.length,
+        totalCommitDurationMs: Number(totalCommitDuration.toFixed(2)),
+        commits
+      })
+    );
+
+    expect(mountedRows).toBeLessThan(ITEM_COUNT);
+    expect(mountedRows).toBeGreaterThan(0);
+    expect(commits.length).toBeGreaterThan(0);
+  });
 });

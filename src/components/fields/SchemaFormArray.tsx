@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import type { SchemaFormArrayProps } from "../../types/components";
 import { useFormHellLocale } from "../../i18n/LocaleProvider";
+import { CollectionRenderer } from "../collections/CollectionRenderer";
 import { FieldShell } from "./FieldShell";
 
 export function SchemaFormArray({
@@ -15,7 +16,8 @@ export function SchemaFormArray({
   canRemoveItems,
   onChange,
   renderItem,
-  createDefaultItem
+  createDefaultItem,
+  virtualization
 }: SchemaFormArrayProps) {
   const { formatMessage } = useFormHellLocale();
   const items = Array.isArray(value) ? value : [];
@@ -38,10 +40,14 @@ export function SchemaFormArray({
   return (
     <FieldShell label={label} required={required} controls={controls}>
       <div>
-        {renderedItems.map((item, index) => {
-          const itemPointer = `${pointer}/${index}`;
+        <CollectionRenderer
+          items={renderedItems}
+          getItemKey={(_item, index) => `${pointer}/${index}`}
+          virtualization={virtualization}
+          renderItem={(item, index) => {
+            const itemPointer = `${pointer}/${index}`;
 
-          return (
+            return (
             <div className="raf-array-item" key={itemPointer}>
               {renderItem(index, itemPointer, item)}
               {canRemoveItems === false ? null : (
@@ -62,8 +68,9 @@ export function SchemaFormArray({
                 </div>
               )}
             </div>
-          );
-        })}
+            );
+          }}
+        />
         {showAddItem ? (
           <button
             className="raf-button raf-button-primary"

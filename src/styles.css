@@ -133,6 +133,23 @@
   margin-bottom: 0.625rem;
 }
 
+.raf-virtualized-collection {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.raf-virtualized-collection-content {
+  position: relative;
+  width: 100%;
+}
+
+.raf-virtualized-collection-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
 .raf-button {
   border: 0;
   border-radius: 0.5rem;

@@ -253,6 +253,20 @@ Small arrays and unsupported array shapes continue using the normal renderer.
 - Scrolling remains stable as rows are measured.
 - Small arrays are unchanged.
 
+### Phase 2 Implementation Notes
+
+Phase 2 is complete.
+
+- Added a dependency-free `useVirtualRange` implementation with estimated sizes, overscan, total-size spacers, and variable-height `ResizeObserver` measurement.
+- Added the opt-in `SchemaFormOptions.virtualization` configuration and exported its TypeScript types.
+- Virtualization activates only for large, homogeneous, non-tuple arrays at the outermost eligible level.
+- Nested arrays remain on the normal rendering path to avoid automatic nested scroll regions.
+- Added a single bounded scroll container with responsive CSS-ready height configuration.
+- Added focused tests for bounded mounting and threshold fallback.
+- Extended the Phase 0 benchmark with an eager versus virtualized comparison: 250 outer rows versus 8 mounted virtual rows in the jsdom environment.
+
+Phase 3 remains responsible for finalizing and documenting the public API, validating configuration values, and deciding whether to expose a public virtualizer adapter.
+
 ## Phase 3: Public Opt-In API
 
 ### Purpose
@@ -293,6 +307,7 @@ Expose the built-in virtualizer in a controlled, backward-compatible way.
 - Opt-in behavior is documented and tested.
 - Invalid configuration fails safely or falls back to normal rendering.
 - The built-in implementation has no new runtime dependency.
+
 
 ## Phase 4: Accessibility, Focus, and Mobile UX
 
@@ -423,11 +438,27 @@ Virtualization should not be credited for improvements that actually come from u
 - Whether full-screen mobile mode belongs in core or a consumer-provided renderer.
 - The exact boundary between the future virtualizer adapter and full TanStack collection renderer.
 
+## Phase 1 Implementation Notes
+
+Phase 1 is complete.
+
+- Added a private `CollectionRenderer` boundary at `src/components/collections/CollectionRenderer.tsx`.
+- Kept the public `SchemaFormWidgets.Array` contract unchanged.
+- Preserved the existing array row DOM, JSON-pointer paths, index keys, add/remove behavior, and nested rendering.
+- The current implementation remains fully eager and non-virtualized; this phase only establishes the seam for the built-in virtualizer.
+- The collection boundary accepts item data, stable key calculation, and row rendering. Future phases can add range calculation and measurement without moving array semantics into a third-party library.
+
+Validation completed:
+
+- 38 existing playground regression tests passed.
+- Library typecheck and build passed.
+- Playground typecheck and build passed.
+
 ## Current Status
 
-- [ ] Phase 0: performance baseline.
-- [ ] Phase 1: internal collection boundary.
-- [ ] Phase 2: built-in dependency-free virtualizer.
+- [x] Phase 0: performance baseline.
+- [x] Phase 1: internal collection boundary.
+- [x] Phase 2: built-in dependency-free virtualizer.
 - [ ] Phase 3: public opt-in API.
 - [ ] Phase 4: accessibility, focus, and mobile UX.
 - [ ] Phase 5: progressive large-object handling.

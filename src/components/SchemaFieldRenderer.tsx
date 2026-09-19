@@ -7,7 +7,13 @@ import { SchemaFormNumber } from "./fields/SchemaFormNumber";
 import { SchemaFormObject } from "./fields/SchemaFormObject";
 import { SchemaFormSelect } from "./fields/SchemaFormSelect";
 import { SchemaFormString } from "./fields/SchemaFormString";
-import type { FieldComponentProps, SchemaFormArrayProps, SchemaFormObjectProps, SchemaFormWidgets } from "../types/components";
+import type {
+  FieldComponentProps,
+  SchemaFormArrayProps,
+  SchemaFormObjectProps,
+  SchemaFormVirtualizationOptions,
+  SchemaFormWidgets
+} from "../types/components";
 import type { JSONSchema, JSONSchemaType } from "../types/schema";
 import { useFormHellLocale } from "../i18n/LocaleProvider";
 import { createDefaultValueFromSchema } from "../utils/defaultData";
@@ -22,11 +28,25 @@ interface SchemaFieldRendererProps {
   value: unknown;
   onChange: (pointer: string, next: unknown) => void;
   widgets?: SchemaFormWidgets;
+  virtualization?: SchemaFormVirtualizationOptions;
+  virtualizationDepth?: number;
   controls?: ReactNode;
 }
 
 export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
-  const { schema, label, required, pointer, schemaPointer, value, onChange, widgets, controls } = props;
+  const {
+    schema,
+    label,
+    required,
+    pointer,
+    schemaPointer,
+    value,
+    onChange,
+    widgets,
+    virtualization,
+    virtualizationDepth = 0,
+    controls
+  } = props;
   const { formatMessage } = useFormHellLocale();
   const hasConstValue = Object.prototype.hasOwnProperty.call(schema, "const");
   const lockedValue = hasConstValue ? schema.const : value;
@@ -142,6 +162,8 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
               value={childValue}
               onChange={onChange}
               widgets={widgets}
+              virtualization={virtualization}
+              virtualizationDepth={virtualizationDepth}
             />
           );
         })}
@@ -193,10 +215,25 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
             value={itemValue}
             onChange={onChange}
             widgets={widgets}
+            virtualization={virtualization}
+            virtualizationDepth={virtualizationDepth + 1}
           />
         )}
         canAddItem={canAddItem}
         canRemoveItems={!tupleItems}
+        virtualization={
+          virtualization?.enabled === true &&
+          virtualizationDepth === 0 &&
+          virtualization.arrays?.enabled !== false &&
+          !tupleItems &&
+          arrayValue.length >= (virtualization.arrays?.threshold ?? 100)
+            ? {
+                height: virtualization.arrays?.height ?? "min(70vh, 36rem)",
+                estimateItemHeight: virtualization.arrays?.estimateItemHeight ?? 160,
+                overscan: virtualization.arrays?.overscan ?? 4
+              }
+            : undefined
+        }
       />
     );
   }

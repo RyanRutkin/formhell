@@ -21,8 +21,15 @@ export interface SchemaFormArrayProps extends FieldComponentProps<unknown[]> {
   itemSchemas?: JSONSchema[];
   canAddItem?: boolean;
   canRemoveItems?: boolean;
+  virtualization?: SchemaFormArrayVirtualizationOptions;
   renderItem: (index: number, pointer: string, value: unknown) => ReactNode;
   createDefaultItem: () => unknown;
+}
+
+export interface SchemaFormArrayVirtualizationOptions {
+  height: number | string;
+  estimateItemHeight: number;
+  overscan: number;
 }
 
 export type SchemaPointerWidget = ComponentType<any>;
@@ -41,6 +48,22 @@ export interface SchemaFormWidgets {
 
 export interface SchemaFormOptions {
   defaults?: "all" | "required-only";
+  virtualization?: SchemaFormVirtualizationOptions;
+}
+
+export interface SchemaFormVirtualizationOptions {
+  enabled?: boolean;
+  arrays?: {
+    enabled?: boolean;
+    threshold?: number;
+    height?: number | string;
+    estimateItemHeight?: number;
+    overscan?: number;
+  };
+  objects?: {
+    enabled?: boolean;
+    threshold?: number;
+  };
 }
 
 export interface SchemaFormProps {

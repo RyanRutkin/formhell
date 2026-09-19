@@ -137,6 +137,7 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
         value={formData}
         onChange={handleFieldChange}
         widgets={widgets}
+        virtualization={options?.virtualization}
       />
     </div>
   );

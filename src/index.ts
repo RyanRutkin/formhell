@@ -22,6 +22,8 @@ export type {
 	SchemaFormProps,
 	SchemaFormWidgets,
 	SchemaFormOptions,
+	SchemaFormArrayVirtualizationOptions,
+	SchemaFormVirtualizationOptions,
 	SchemaFormValidationError,
 	SchemaBuilderProps,
 	SchemaBuilderHelperProps,
