@@ -342,13 +342,11 @@ Implemented foundation:
 - Adding an array item moves focus into the new row.
 - Structured validation errors scroll a virtualized array to the first invalid item index.
 - Virtualized viewports use touch scrolling and a mobile `70vh` maximum height.
+- Mobile users can expand a virtualized collection into a full-screen editing surface and collapse it again.
 
-Remaining before Phase 4 completion:
+Phase 4 is complete for the current built-in renderer.
 
-- Scroll-to-validation-error behavior (implemented for array `instancePath` errors).
-- Predictable focus placement after add/remove (implemented).
-- Collection change announcements where needed (array add/remove implemented).
-- Mobile expand/full-screen affordance evaluation.
+The implementation includes array `instancePath` validation reveal, add/remove focus continuity, localized live announcements, touch scrolling, a visible item count, and a mobile-only full-screen expand/collapse affordance.
 
 ### Accessibility Requirements
 
@@ -497,6 +495,6 @@ Validation completed:
 - [x] Phase 1: internal collection boundary.
 - [x] Phase 2: built-in dependency-free virtualizer.
 - [x] Phase 3: public opt-in API.
-- [ ] Phase 4: accessibility, focus, and mobile UX.
+- [x] Phase 4: accessibility, focus, and mobile UX.
 - [ ] Phase 5: progressive large-object handling.
 - [ ] Phase 6: future TanStack integration.

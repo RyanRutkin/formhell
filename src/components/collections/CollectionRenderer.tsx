@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useRef, type Key, type ReactNode, type RefCallback } from "react";
+import { Fragment, useEffect, useRef, useState, type Key, type ReactNode, type RefCallback } from "react";
+import { useFormHellLocale } from "../../i18n/LocaleProvider";
 import { useVirtualRange } from "./useVirtualRange";
 
 export interface CollectionVirtualizationOptions {
@@ -46,6 +47,8 @@ function VirtualizedCollection<TItem>({
 }: CollectionRendererProps<TItem> & {
   virtualization: CollectionVirtualizationOptions;
 }) {
+  const { formatMessage } = useFormHellLocale();
+  const [isExpanded, setIsExpanded] = useState(false);
   const elementIndexes = useRef(new Map<Element, number>());
   const { range, setScrollElement, onScroll, measure, scrollToIndex: scrollToVirtualIndex } = useVirtualRange({
     count: items.length,
@@ -95,35 +98,45 @@ function VirtualizedCollection<TItem>({
   };
 
   return (
-    <div
-      className="raf-virtualized-collection"
-      role="list"
-      ref={setScrollElement}
-      style={{ height: virtualization.height }}
-      onScroll={onScroll}
-      onFocusCapture={(event) => {
-        const item = (event.target as HTMLElement).closest<HTMLElement>("[data-virtualized-index]");
-        item?.scrollIntoView({ block: "nearest", inline: "nearest" });
-      }}
-    >
-      <div className="raf-virtualized-collection-content" style={{ height: range.totalSize }}>
-        {items.slice(range.startIndex, range.endIndex + 1).map((item, relativeIndex) => {
-          const index = range.startIndex + relativeIndex;
-          return (
-            <div
-              key={getItemKey(item, index)}
-              ref={setMeasuredRef(index)}
-              className="raf-virtualized-collection-item"
-              role="listitem"
-              aria-setsize={items.length}
-              aria-posinset={index + 1}
-              data-virtualized-index={index}
-              style={{ transform: `translateY(${range.getItemOffset(index)}px)` }}
-            >
-              {renderItem(item, index)}
-            </div>
-          );
-        })}
+    <div className={`raf-virtualized-collection-shell${isExpanded ? " raf-virtualized-collection-shell-expanded" : ""}`}>
+      <span className="raf-virtualized-collection-count">{formatMessage("array.itemCount", { count: items.length })}</span>
+      <button
+        type="button"
+        className="raf-virtualized-collection-expand"
+        onClick={() => setIsExpanded((current) => !current)}
+      >
+        {formatMessage(isExpanded ? "array.collapse" : "array.expand")}
+      </button>
+      <div
+        className="raf-virtualized-collection"
+        role="list"
+        ref={setScrollElement}
+        style={{ height: virtualization.height }}
+        onScroll={onScroll}
+        onFocusCapture={(event) => {
+          const item = (event.target as HTMLElement).closest<HTMLElement>("[data-virtualized-index]");
+          item?.scrollIntoView({ block: "nearest", inline: "nearest" });
+        }}
+      >
+        <div className="raf-virtualized-collection-content" style={{ height: range.totalSize }}>
+          {items.slice(range.startIndex, range.endIndex + 1).map((item, relativeIndex) => {
+            const index = range.startIndex + relativeIndex;
+            return (
+              <div
+                key={getItemKey(item, index)}
+                ref={setMeasuredRef(index)}
+                className="raf-virtualized-collection-item"
+                role="listitem"
+                aria-setsize={items.length}
+                aria-posinset={index + 1}
+                data-virtualized-index={index}
+                style={{ transform: `translateY(${range.getItemOffset(index)}px)` }}
+              >
+                {renderItem(item, index)}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

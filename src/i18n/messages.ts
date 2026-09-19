@@ -19,6 +19,9 @@ export interface FormHellMessages {
     tupleLabel: string;
     itemAdded: string;
     itemRemoved: string;
+    itemCount: string;
+    expand: string;
+    collapse: string;
   };
   boolean: {
     trueLabel: string;
@@ -52,7 +55,10 @@ export const defaultMessages: FormHellMessages = {
     itemLabel: "Item {index}",
     tupleLabel: "Tuple {index}",
     itemAdded: "Item {index} added",
-    itemRemoved: "Item {index} removed"
+    itemRemoved: "Item {index} removed",
+    itemCount: "{count} items",
+    expand: "Expand collection",
+    collapse: "Collapse collection"
   },
   boolean: {
     trueLabel: "True",
