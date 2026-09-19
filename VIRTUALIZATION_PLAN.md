@@ -176,6 +176,17 @@ Measure the real bottleneck before adding virtualization. Virtualization primari
 - At least one schema demonstrates a meaningful DOM/rendering bottleneck.
 - The first supported virtualization target is confirmed to be large homogeneous arrays.
 
+### Initial Recorded Baseline
+
+The opt-in benchmark is available at `playground/src/virtualization.baseline.test.tsx` and runs with:
+
+```bash
+$env:FORMHELL_BENCHMARK="1"
+npm --prefix playground run benchmark:virtualization
+```
+
+The initial nested-array fixture contains 250 outer records. The eager renderer mounted 250 outer rows and 750 total array rows, including nested tag rows. In the jsdom benchmark run, React produced two commits with approximately 381 ms total `actualDuration`. These numbers are environment-specific and are intended for before/after comparison, not universal performance thresholds.
+
 ## Phase 1: Internal Collection Boundary
 
 ### Purpose
