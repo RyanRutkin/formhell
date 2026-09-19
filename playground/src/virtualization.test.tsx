@@ -48,6 +48,11 @@ describe("Built-in array virtualization", () => {
     const mountedRows = container.querySelectorAll(".raf-virtualized-collection-item").length;
     expect(mountedRows).toBeGreaterThan(0);
     expect(mountedRows).toBeLessThan(data.records.length);
+
+    const firstRow = container.querySelector<HTMLElement>(".raf-virtualized-collection-item");
+    expect(firstRow?.getAttribute("role")).toBe("listitem");
+    expect(firstRow?.getAttribute("aria-setsize")).toBe(String(data.records.length));
+    expect(firstRow?.getAttribute("aria-posinset")).toBe("1");
   });
 
   it("keeps arrays below the threshold on the normal rendering path", async () => {

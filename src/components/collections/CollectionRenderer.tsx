@@ -88,9 +88,14 @@ function VirtualizedCollection<TItem>({
   return (
     <div
       className="raf-virtualized-collection"
+      role="list"
       ref={setScrollElement}
       style={{ height: virtualization.height }}
       onScroll={onScroll}
+      onFocusCapture={(event) => {
+        const item = (event.target as HTMLElement).closest<HTMLElement>("[data-virtualized-index]");
+        item?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }}
     >
       <div className="raf-virtualized-collection-content" style={{ height: range.totalSize }}>
         {items.slice(range.startIndex, range.endIndex + 1).map((item, relativeIndex) => {
@@ -100,6 +105,10 @@ function VirtualizedCollection<TItem>({
               key={getItemKey(item, index)}
               ref={setMeasuredRef(index)}
               className="raf-virtualized-collection-item"
+              role="listitem"
+              aria-setsize={items.length}
+              aria-posinset={index + 1}
+              data-virtualized-index={index}
               style={{ transform: `translateY(${range.getItemOffset(index)}px)` }}
             >
               {renderItem(item, index)}

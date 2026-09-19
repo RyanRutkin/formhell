@@ -134,8 +134,10 @@
 }
 
 .raf-virtualized-collection {
+  max-width: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .raf-virtualized-collection-content {
@@ -148,6 +150,12 @@
   top: 0;
   left: 0;
   width: 100%;
+}
+
+@media (max-width: 40rem) {
+  .raf-virtualized-collection {
+    max-height: 70vh;
+  }
 }
 
 .raf-button {

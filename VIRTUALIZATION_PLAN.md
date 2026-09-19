@@ -330,6 +330,22 @@ Expose the built-in virtualizer in a controlled, backward-compatible way.
 
 Virtualization is not complete when it merely reduces mounted nodes. It must preserve form usability.
 
+### Phase 4 Progress
+
+Implemented foundation:
+
+- Virtualized collections expose `role="list"` and virtual rows expose `role="listitem"`.
+- Rows expose `aria-setsize` and `aria-posinset` for screen readers.
+- Focus inside a mounted row scrolls that row into the nearest visible position.
+- Virtualized viewports use touch scrolling and a mobile `70vh` maximum height.
+
+Remaining before Phase 4 completion:
+
+- Scroll-to-validation-error behavior.
+- Predictable focus placement after add/remove.
+- Collection change announcements where needed.
+- Mobile expand/full-screen affordance evaluation.
+
 ### Accessibility Requirements
 
 - Expose `aria-setsize` for the total collection size.
