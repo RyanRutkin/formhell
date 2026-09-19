@@ -65,6 +65,155 @@ import { SchemaForm, SchemaBuilder, SchemaBuilderHelper } from "formhell";
 import "formhell/styles.css";
 ```
 
+## Localization
+
+FormHell includes localization support without depending on a localization library. Its built-in English messages preserve the default behavior, while `FormHellLocaleProvider` lets an application provide partial message overrides or delegate translation to an existing React i18n system.
+
+FormHell does not read cookies, browser storage, or navigator language automatically. The host application remains responsible for choosing the active locale, which avoids conflicting locale sources and works with SSR, React Server Components, and existing routing strategies.
+
+### Without an external localization library
+
+Use `messages` for a small application, a prototype, or overrides that only cover a few strings. Unspecified messages fall back to the built-in English defaults:
+
+```tsx
+import { FormHellLocaleProvider, SchemaForm } from "formhell";
+import "formhell/styles.css";
+
+const frenchMessages = {
+  field: {
+    optional: "Facultatif"
+  },
+  array: {
+    addItem: "Ajouter un élément",
+    remove: "Supprimer",
+    itemLabel: "Élément {index}"
+  },
+  boolean: {
+    trueLabel: "Oui",
+    falseLabel: "Non"
+  },
+  select: {
+    placeholder: "Sélectionner..."
+  }
+};
+
+<FormHellLocaleProvider locale="fr-FR" messages={frenchMessages}>
+  <SchemaForm schema={schema} />
+</FormHellLocaleProvider>;
+```
+
+Message values support `{name}`-style interpolation. The default catalog includes library-owned chrome such as optional markers, array actions, boolean labels, select placeholders, null descriptions, loading messages, and generated item labels.
+
+### Using an existing React localization library
+
+For applications already using a localization framework, pass its translator through `translate`. The adapter receives a stable FormHell key, interpolation values, and the English default message. Return `undefined` to fall through to the `messages` override or built-in English default.
+
+#### react-i18next
+
+```tsx
+import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import { FormHellLocaleProvider } from "formhell";
+
+function FormHellI18n({ children }: { children: ReactNode }) {
+  const { t, i18n } = useTranslation("formhell");
+
+  return (
+    <FormHellLocaleProvider
+      locale={i18n.language}
+      translate={(key, values, defaultMessage) =>
+        t(key, { ...values, defaultValue: defaultMessage })
+      }
+    >
+      {children}
+    </FormHellLocaleProvider>
+  );
+}
+```
+
+The host i18next resource can use keys such as `array.addItem`, `array.remove`, `field.optional`, and `select.placeholder`.
+
+#### FormatJS / react-intl
+
+```tsx
+import type { ReactNode } from "react";
+import { useIntl } from "react-intl";
+import { FormHellLocaleProvider } from "formhell";
+
+function FormHellIntl({ children }: { children: ReactNode }) {
+  const intl = useIntl();
+
+  return (
+    <FormHellLocaleProvider
+      locale={intl.locale}
+      translate={(key, values, defaultMessage) =>
+        intl.formatMessage(
+          { id: `formhell.${key}`, defaultMessage },
+          values
+        )
+      }
+    >
+      {children}
+    </FormHellLocaleProvider>
+  );
+}
+```
+
+Passing `defaultMessage` gives FormatJS a fallback for missing translations. The values object is compatible with ICU interpolation for the built-in indexed labels.
+
+#### Paraglide
+
+Paraglide generates typed message functions rather than encouraging arbitrary runtime key lookup. Create a small adapter map for the FormHell keys your application translates:
+
+```tsx
+import type { ReactNode } from "react";
+import { getLocale } from "./paraglide/runtime";
+import * as m from "./paraglide/messages";
+import { FormHellLocaleProvider } from "formhell";
+
+const formhellMessages: Record<string, (values?: Record<string, string | number>) => string> = {
+  "field.optional": m.formhell_field_optional,
+  "array.addItem": m.formhell_array_addItem,
+  "array.remove": m.formhell_array_remove,
+  "array.itemLabel": m.formhell_array_itemLabel,
+  "select.placeholder": m.formhell_select_placeholder
+};
+
+function FormHellParaglide({ children }: { children: ReactNode }) {
+  return (
+    <FormHellLocaleProvider
+      locale={getLocale()}
+      translate={(key, values) => formhellMessages[key]?.(values)}
+    >
+      {children}
+    </FormHellLocaleProvider>
+  );
+}
+```
+
+Paraglide locale changes must cause the React tree to render again so the provider receives the new `locale` value.
+
+### Localization boundaries
+
+FormHell distinguishes library-owned UI strings from schema-owned content:
+
+- **Library chrome** is handled by `FormHellLocaleProvider`: buttons, optional markers, generated item labels, status text, and accessibility labels.
+- **Schema-derived labels** come from `schema.title`, or the property name when no title exists. Applications should localize schema titles through their existing translation layer before passing the schema, or add a label-resolution layer around their schema data.
+- **Enum display values** are rendered from the schema's enum values. Use `oneOf` entries with `const` and localized `title` annotations when a value needs a translated display label.
+- **Validation errors** include both a readable `message` and structured `keyword`, `instancePath`, `schemaPath`, and `params` fields. Use those structured fields to produce localized validation text in the host application or integrate an AJV localization package.
+
+### Locale and right-to-left text
+
+`locale` is also used to derive text direction. Arabic, Hebrew, Persian, Urdu, and other known right-to-left locales cause the SchemaForm root to receive `dir="rtl"`. Override this explicitly when your application needs different behavior:
+
+```tsx
+<FormHellLocaleProvider locale="ar-EG" direction="rtl">
+  <SchemaForm schema={schema} />
+</FormHellLocaleProvider>
+```
+
+FormHell intentionally does not automatically detect locale from cookies. Pass the locale resolved by your router, i18next detector, Paraglide runtime, FormatJS provider, or server request so the server and client render the same language.
+
 ## Theming
 
 FormHell does not depend on Material UI or any other styling framework. Importing `formhell/styles.css` gives the components a complete default theme, so the library works without a provider or theme package.
