@@ -12,9 +12,10 @@ interface CollectionRendererProps<TItem> {
   getItemKey: (item: TItem, index: number) => Key;
   renderItem: (item: TItem, index: number) => ReactNode;
   virtualization?: CollectionVirtualizationOptions;
+  scrollToIndex?: number;
 }
 
-export function CollectionRenderer<TItem>({ items, getItemKey, renderItem, virtualization }: CollectionRendererProps<TItem>) {
+export function CollectionRenderer<TItem>({ items, getItemKey, renderItem, virtualization, scrollToIndex }: CollectionRendererProps<TItem>) {
   if (!virtualization) {
     return (
       <>
@@ -31,6 +32,7 @@ export function CollectionRenderer<TItem>({ items, getItemKey, renderItem, virtu
       getItemKey={getItemKey}
       renderItem={renderItem}
       virtualization={virtualization}
+      scrollToIndex={scrollToIndex}
     />
   );
 }
@@ -39,17 +41,24 @@ function VirtualizedCollection<TItem>({
   items,
   getItemKey,
   renderItem,
-  virtualization
+  virtualization,
+  scrollToIndex
 }: CollectionRendererProps<TItem> & {
   virtualization: CollectionVirtualizationOptions;
 }) {
   const elementIndexes = useRef(new Map<Element, number>());
-  const { range, setScrollElement, onScroll, measure } = useVirtualRange({
+  const { range, setScrollElement, onScroll, measure, scrollToIndex: scrollToVirtualIndex } = useVirtualRange({
     count: items.length,
     estimateSize: virtualization.estimateItemHeight,
     overscan: virtualization.overscan,
     initialViewportSize: typeof virtualization.height === "number" ? virtualization.height : 480
   });
+
+  useEffect(() => {
+    if (scrollToIndex !== undefined) {
+      scrollToVirtualIndex(scrollToIndex);
+    }
+  }, [scrollToIndex, scrollToVirtualIndex]);
 
   useEffect(() => {
     if (typeof ResizeObserver === "undefined") {

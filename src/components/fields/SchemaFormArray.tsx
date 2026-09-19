@@ -17,7 +17,8 @@ export function SchemaFormArray({
   onChange,
   renderItem,
   createDefaultItem,
-  virtualization
+  virtualization,
+  validationErrors
 }: SchemaFormArrayProps) {
   const { formatMessage } = useFormHellLocale();
   const [announcement, setAnnouncement] = useState("");
@@ -38,6 +39,7 @@ export function SchemaFormArray({
     ? Array.from({ length: initialItemCount }, () => createDefaultItem())
     : items;
   const showAddItem = !disabled && canAddItem !== false && renderedItems.length < (maxItems ?? Number.POSITIVE_INFINITY);
+  const firstInvalidIndex = valueErrorsIndex(pointer, validationErrors);
 
   useEffect(() => {
     const targetIndex = pendingFocusIndexRef.current;
@@ -61,6 +63,7 @@ export function SchemaFormArray({
           items={renderedItems}
           getItemKey={(_item, index) => `${pointer}/${index}`}
           virtualization={virtualization}
+          scrollToIndex={firstInvalidIndex}
           renderItem={(item, index) => {
             const itemPointer = `${pointer}/${index}`;
 
@@ -121,4 +124,26 @@ function getInitialItemCount(minItems: unknown, maxItems: number | undefined): n
   }
 
   return Math.max(0, Math.min(desiredCount, maxItems));
+}
+
+function valueErrorsIndex(pointer: string, errors: SchemaFormArrayProps["validationErrors"]): number | undefined {
+  if (!errors) {
+    return undefined;
+  }
+
+  const prefix = pointer ? `${pointer}/` : "/";
+  for (const error of errors) {
+    if (!error.instancePath?.startsWith(prefix)) {
+      continue;
+    }
+
+    const remainder = error.instancePath.slice(prefix.length);
+    const indexText = remainder.split("/")[0];
+    const index = Number(indexText);
+    if (Number.isInteger(index) && index >= 0) {
+      return index;
+    }
+  }
+
+  return undefined;
 }

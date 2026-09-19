@@ -340,11 +340,12 @@ Implemented foundation:
 - Removing an array item moves focus to the next available item, or the previous item when the removed row was last.
 - Adding or removing an array item announces the change through a localized polite live region.
 - Adding an array item moves focus into the new row.
+- Structured validation errors scroll a virtualized array to the first invalid item index.
 - Virtualized viewports use touch scrolling and a mobile `70vh` maximum height.
 
 Remaining before Phase 4 completion:
 
-- Scroll-to-validation-error behavior.
+- Scroll-to-validation-error behavior (implemented for array `instancePath` errors).
 - Predictable focus placement after add/remove (implemented).
 - Collection change announcements where needed (array add/remove implemented).
 - Mobile expand/full-screen affordance evaluation.

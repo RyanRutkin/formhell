@@ -140,4 +140,28 @@ describe("Built-in array virtualization", () => {
       expect(within(recordsField).getByRole("status").textContent).toBe("Item 2 added");
     });
   });
+
+  it("scrolls a virtualized array toward its first invalid item", async () => {
+    const invalidData = {
+      records: data.records.map((record, index) => (index === 110 ? { ...record, value: "invalid" } : record))
+    };
+    const { container } = render(
+      <SchemaForm
+        schema={schema}
+        data={invalidData}
+        options={{
+          virtualization: {
+            enabled: true,
+            arrays: { threshold: 100, height: 480, estimateItemHeight: 160, overscan: 2 }
+          }
+        }}
+      />
+    );
+
+    await waitFor(() => {
+      const viewport = container.querySelector<HTMLElement>(".raf-virtualized-collection");
+      expect(viewport).not.toBeNull();
+      expect(viewport?.scrollTop).toBeGreaterThan(0);
+    });
+  });
 });

@@ -11,6 +11,7 @@ import type {
   FieldComponentProps,
   SchemaFormArrayProps,
   SchemaFormObjectProps,
+  SchemaFormValidationError,
   SchemaFormVirtualizationOptions,
   SchemaFormWidgets
 } from "../types/components";
@@ -31,6 +32,7 @@ interface SchemaFieldRendererProps {
   widgets?: SchemaFormWidgets;
   virtualization?: SchemaFormVirtualizationOptions;
   virtualizationDepth?: number;
+  validationErrors?: SchemaFormValidationError[];
   controls?: ReactNode;
 }
 
@@ -46,6 +48,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
     widgets,
     virtualization,
     virtualizationDepth = 0,
+    validationErrors,
     controls
   } = props;
   const { formatMessage } = useFormHellLocale();
@@ -165,6 +168,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
               widgets={widgets}
               virtualization={virtualization}
               virtualizationDepth={virtualizationDepth}
+              validationErrors={validationErrors}
             />
           );
         })}
@@ -224,11 +228,13 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
             widgets={widgets}
             virtualization={virtualization}
             virtualizationDepth={virtualizationDepth + 1}
+            validationErrors={validationErrors}
           />
         )}
         canAddItem={canAddItem}
         canRemoveItems={!tupleItems}
         virtualization={virtualizationOptions}
+        validationErrors={validationErrors}
       />
     );
   }

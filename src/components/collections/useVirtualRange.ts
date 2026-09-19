@@ -69,6 +69,18 @@ export function useVirtualRange({ count, estimateSize, overscan, initialViewport
     setMeasuredSizes((current) => (current[index] === roundedSize ? current : { ...current, [index]: roundedSize }));
   }, []);
 
+  const scrollToIndex = useCallback(
+    (index: number) => {
+      const element = scrollElementRef.current;
+      if (!element || count === 0) {
+        return;
+      }
+
+      element.scrollTop = offsets[Math.max(0, Math.min(index, count - 1))];
+    },
+    [count, offsets]
+  );
+
   useEffect(() => {
     const element = scrollElementRef.current;
     if (!element) {
@@ -92,7 +104,7 @@ export function useVirtualRange({ count, estimateSize, overscan, initialViewport
     return () => observer.disconnect();
   }, []);
 
-  return { range, setScrollElement, onScroll, measure };
+  return { range, setScrollElement, onScroll, measure, scrollToIndex };
 }
 
 function findIndexAtOffset(offsets: number[], target: number): number {

@@ -9,6 +9,7 @@ export interface FieldComponentProps<TValue = unknown> {
   value: TValue;
   disabled?: boolean;
   controls?: ReactNode;
+  validationErrors?: SchemaFormValidationError[];
   onChange: (next: TValue) => void;
 }
 
