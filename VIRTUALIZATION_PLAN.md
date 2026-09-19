@@ -116,6 +116,35 @@ Initial default behavior:
 
 These defaults are a planning target. Final names and defaults should be settled after Phase 0 profiling and Phase 1 contract work.
 
+## README Documentation Deliverable
+
+When the public API is finalized, update `README.md` in the same phase as the public opt-in API. Do not document the planning names as if they were stable before that point.
+
+The README feature documentation must include a detailed reference for every public virtualization option:
+
+- `virtualization.enabled`: global opt-in behavior, default value, and how it interacts with array/object settings.
+- `virtualization.arrays.enabled`: whether array virtualization is enabled independently of the global switch.
+- `virtualization.arrays.threshold`: the item count at which virtualization activates, including behavior below the threshold.
+- `virtualization.arrays.height`: accepted CSS or numeric forms, viewport sizing, mobile behavior, and the consequences of omitting it.
+- `virtualization.arrays.estimateItemHeight`: how the estimate affects initial scrollbar accuracy and variable-height correction.
+- `virtualization.arrays.overscan`: how many items outside the visible range are mounted and the trade-off between memory and scroll smoothness.
+- `virtualization.objects.enabled`: current support status and whether object virtualization is experimental or unavailable.
+- `virtualization.objects.threshold`: how the object-property threshold is interpreted if progressive object rendering is supported.
+
+The README section must also explain:
+
+- Which arrays are supported initially, especially homogeneous arrays versus tuple/mixed-schema arrays.
+- That virtualization is opt-in and the default rendering behavior remains unchanged.
+- How nested arrays behave and why automatic nested scroll containers are avoided.
+- Mobile viewport behavior and any expand/full-screen affordance.
+- Focus, keyboard navigation, validation-error reveal, and accessibility behavior.
+- How variable-height rows are measured.
+- How to provide or select a custom virtualizer implementation once the adapter API is public.
+- That TanStack integration is optional and provided separately; the core package must not require TanStack.
+- Which options are stable, experimental, or reserved for the future full collection-renderer plugin.
+
+Every option documented in the README should have a matching TypeScript type, default, test, and release-note entry before the feature is considered complete.
+
 ## Phase 0: Performance Baseline
 
 ### Purpose
