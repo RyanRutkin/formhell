@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SchemaFormArrayProps } from "../../types/components";
 import { useFormHellLocale } from "../../i18n/LocaleProvider";
 import { CollectionRenderer } from "../collections/CollectionRenderer";
@@ -20,6 +20,7 @@ export function SchemaFormArray({
   virtualization
 }: SchemaFormArrayProps) {
   const { formatMessage } = useFormHellLocale();
+  const [announcement, setAnnouncement] = useState("");
   const items = Array.isArray(value) ? value : [];
   const hasUserModifiedRef = useRef(false);
   const pendingFocusIndexRef = useRef<number | null>(null);
@@ -75,6 +76,7 @@ export function SchemaFormArray({
                     onClick={() => {
                       hasUserModifiedRef.current = true;
                       pendingFocusIndexRef.current = Math.min(index, renderedItems.length - 2);
+                      setAnnouncement(formatMessage("array.itemRemoved", { index: index + 1 }));
                       const next = [...renderedItems];
                       next.splice(index, 1);
                       onChange(next);
@@ -94,6 +96,8 @@ export function SchemaFormArray({
             type="button"
             onClick={() => {
               hasUserModifiedRef.current = true;
+              pendingFocusIndexRef.current = renderedItems.length;
+              setAnnouncement(formatMessage("array.itemAdded", { index: renderedItems.length + 1 }));
               const next = [...renderedItems, createDefaultItem()];
               onChange(next);
             }}
@@ -101,6 +105,9 @@ export function SchemaFormArray({
             {formatMessage("array.addItem")}
           </button>
         ) : null}
+        <div className="raf-sr-only" role="status" aria-live="polite">
+          {announcement}
+        </div>
       </div>
     </FieldShell>
   );

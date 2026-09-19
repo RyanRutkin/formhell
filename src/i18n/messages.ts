@@ -17,6 +17,8 @@ export interface FormHellMessages {
     remove: string;
     itemLabel: string;
     tupleLabel: string;
+    itemAdded: string;
+    itemRemoved: string;
   };
   boolean: {
     trueLabel: string;
@@ -48,7 +50,9 @@ export const defaultMessages: FormHellMessages = {
     addItem: "Add Item",
     remove: "Remove",
     itemLabel: "Item {index}",
-    tupleLabel: "Tuple {index}"
+    tupleLabel: "Tuple {index}",
+    itemAdded: "Item {index} added",
+    itemRemoved: "Item {index} removed"
   },
   boolean: {
     trueLabel: "True",

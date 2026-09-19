@@ -338,13 +338,15 @@ Implemented foundation:
 - Rows expose `aria-setsize` and `aria-posinset` for screen readers.
 - Focus inside a mounted row scrolls that row into the nearest visible position.
 - Removing an array item moves focus to the next available item, or the previous item when the removed row was last.
+- Adding or removing an array item announces the change through a localized polite live region.
+- Adding an array item moves focus into the new row.
 - Virtualized viewports use touch scrolling and a mobile `70vh` maximum height.
 
 Remaining before Phase 4 completion:
 
 - Scroll-to-validation-error behavior.
-- Predictable focus placement after add/remove (removal is implemented; add focus remains).
-- Collection change announcements where needed.
+- Predictable focus placement after add/remove (implemented).
+- Collection change announcements where needed (array add/remove implemented).
 - Mobile expand/full-screen affordance evaluation.
 
 ### Accessibility Requirements

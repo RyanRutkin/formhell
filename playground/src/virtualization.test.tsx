@@ -121,4 +121,23 @@ describe("Built-in array virtualization", () => {
       expect((document.activeElement as HTMLInputElement).value).toBe("Second");
     });
   });
+
+  it("focuses the new item and announces array additions", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<SchemaForm schema={schema} data={{ records: [{ name: "First", value: 1 }] }} />);
+    const recordsField = await waitFor(() => {
+      const field = Array.from(container.querySelectorAll(".raf-field")).find(
+        (candidate) => candidate.querySelector(".raf-field-label")?.textContent?.trim() === "records"
+      );
+      expect(field).not.toBeUndefined();
+      return field as HTMLElement;
+    });
+
+    await user.click(within(recordsField).getByRole("button", { name: "Add Item" }));
+
+    await waitFor(() => {
+      expect((document.activeElement as HTMLInputElement).value).toBe("");
+      expect(within(recordsField).getByRole("status").textContent).toBe("Item 2 added");
+    });
+  });
 });
