@@ -387,6 +387,19 @@ The implementation includes array `instancePath` validation reveal, add/remove f
 
 Do not begin with object-property virtualization. First implement progressive disclosure:
 
+### Phase 5 Progress
+
+Implemented foundation:
+
+- Added opt-in progressive rendering for large top-level objects.
+- Required properties remain visible.
+- Optional properties render in a configurable initial batch.
+- Localized show-more/show-less controls reveal the remaining optional properties.
+- Nested object progressive rendering remains disabled to avoid nested disclosure complexity.
+- Object virtualization remains out of scope for this phase.
+
+The remaining Phase 5 work is performance profiling and design review for very large object schemas before expanding the progressive API further.
+
 - Keep required properties visible.
 - Keep invalid properties visible.
 - Render optional properties in batches.

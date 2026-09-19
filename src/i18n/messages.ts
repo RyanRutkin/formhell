@@ -33,6 +33,10 @@ export interface FormHellMessages {
   nullField: {
     description: string;
   };
+  object: {
+    showMore: string;
+    showLess: string;
+  };
 }
 
 export const defaultMessages: FormHellMessages = {
@@ -69,5 +73,9 @@ export const defaultMessages: FormHellMessages = {
   },
   nullField: {
     description: "Value is always null."
+  },
+  object: {
+    showMore: "Show {count} more properties",
+    showLess: "Show fewer properties"
   }
 };

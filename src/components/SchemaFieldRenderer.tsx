@@ -52,6 +52,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
     controls
   } = props;
   const { formatMessage } = useFormHellLocale();
+  const [isObjectExpanded, setIsObjectExpanded] = useState(false);
   const hasConstValue = Object.prototype.hasOwnProperty.call(schema, "const");
   const lockedValue = hasConstValue ? schema.const : value;
   const isConstLocked = hasConstValue;
@@ -133,6 +134,20 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
     const objectValue = isObject(lockedValue) ? lockedValue : {};
     const requiredKeys = new Set(schema.required ?? []);
     const properties = schema.properties ?? {};
+    const propertyEntries = Object.entries(properties);
+    const requiredEntries = propertyEntries.filter(([propertyName]) => requiredKeys.has(propertyName));
+    const optionalEntries = propertyEntries.filter(([propertyName]) => !requiredKeys.has(propertyName));
+    const progressiveObjects =
+      virtualization?.enabled === true &&
+      virtualization.objects?.enabled === true &&
+      virtualizationDepth === 0 &&
+      propertyEntries.length >= (virtualization.objects.threshold ?? 100);
+    const visibleOptionalCount = progressiveObjects
+      ? Math.min(optionalEntries.length, Math.max(1, Math.floor(virtualization.objects?.initialVisibleProperties ?? 25)))
+      : optionalEntries.length;
+    const visibleEntries = progressiveObjects && !isObjectExpanded
+      ? [...requiredEntries, ...optionalEntries.slice(0, visibleOptionalCount)]
+      : propertyEntries;
 
     return (
       <ObjectWidget
@@ -150,7 +165,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
           onChange(pointer, next);
         }}
       >
-        {Object.entries(properties).map(([propertyName, propertySchema]) => {
+        {visibleEntries.map(([propertyName, propertySchema]) => {
           const childPointer = joinPointer(pointer, propertyName);
           const childSchemaPointer = joinPointer(joinPointer(schemaPointer, "properties"), propertyName);
           const childValue = objectValue[propertyName];
@@ -172,6 +187,19 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
             />
           );
         })}
+        {progressiveObjects && (isObjectExpanded || optionalEntries.length > visibleOptionalCount) ? (
+          <div className="raf-button-row">
+            <button
+              className="raf-button raf-button-secondary"
+              type="button"
+              onClick={() => setIsObjectExpanded((current) => !current)}
+            >
+              {isObjectExpanded
+                ? formatMessage("object.showLess")
+                : formatMessage("object.showMore", { count: optionalEntries.length - visibleOptionalCount })}
+            </button>
+          </div>
+        ) : null}
       </ObjectWidget>
     );
   }

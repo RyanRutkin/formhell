@@ -64,6 +64,7 @@ export interface SchemaFormVirtualizationOptions {
   objects?: {
     enabled?: boolean;
     threshold?: number;
+    initialVisibleProperties?: number;
   };
 }
 

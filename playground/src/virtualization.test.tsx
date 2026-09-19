@@ -1,4 +1,4 @@
-import { render, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SchemaForm, type JSONSchema } from "formhell";
 
@@ -163,5 +163,44 @@ describe("Built-in array virtualization", () => {
       expect(viewport).not.toBeNull();
       expect(viewport?.scrollTop).toBeGreaterThan(0);
     });
+  });
+
+  it("progressively reveals optional properties in a large object", async () => {
+    const user = userEvent.setup();
+    const objectSchema: JSONSchema = {
+      type: "object",
+      required: ["requiredField"],
+      properties: {
+        requiredField: { type: "string" },
+        optionalOne: { type: "string" },
+        optionalTwo: { type: "string" },
+        optionalThree: { type: "string" },
+        optionalFour: { type: "string" }
+      }
+    };
+    const { container } = render(
+      <SchemaForm
+        schema={objectSchema}
+        data={{ requiredField: "required" }}
+        options={{
+          virtualization: {
+            enabled: true,
+            objects: { enabled: true, threshold: 3, initialVisibleProperties: 2 }
+          }
+        }}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("requiredField")).not.toBeNull();
+      expect(screen.getByText("optionalOne")).not.toBeNull();
+      expect(screen.getByText("optionalTwo")).not.toBeNull();
+      expect(screen.queryByText("optionalThree")).toBeNull();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Show 2 more properties" }));
+    expect(await screen.findByText("optionalThree")).not.toBeNull();
+    expect(await screen.findByText("optionalFour")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Show fewer properties" })).not.toBeNull();
   });
 });
