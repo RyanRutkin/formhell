@@ -4,6 +4,8 @@ import { SchemaForm, type JSONSchema } from "formhell";
 
 const ITEM_COUNT = 250;
 
+const LARGE_OBJECT_PROPERTY_COUNT = 250;
+
 const largeNestedSchema: JSONSchema = {
   type: "object",
   properties: {
@@ -38,6 +40,26 @@ function createLargeNestedData() {
         tags: [`tag-${index}`, "baseline"]
       }
     }))
+  };
+}
+
+const largeObjectSchema: JSONSchema = {
+  type: "object",
+  required: ["requiredField"],
+  properties: {
+    requiredField: { type: "string" },
+    ...Object.fromEntries(
+      Array.from({ length: LARGE_OBJECT_PROPERTY_COUNT - 1 }, (_, index) => [`optional${index + 1}`, { type: "string" }])
+    )
+  }
+};
+
+function createLargeObjectData() {
+  return {
+    requiredField: "required",
+    ...Object.fromEntries(
+      Array.from({ length: LARGE_OBJECT_PROPERTY_COUNT - 1 }, (_, index) => [`optional${index + 1}`, `value-${index + 1}`])
+    )
   };
 }
 
@@ -126,6 +148,45 @@ describe.skipIf(!process.env.FORMHELL_BENCHMARK)("Virtualization baseline", () =
 
     expect(mountedRows).toBeLessThan(ITEM_COUNT);
     expect(mountedRows).toBeGreaterThan(0);
+    expect(commits.length).toBeGreaterThan(0);
+  });
+
+  it("records progressive rendering cost for a large object", async () => {
+    const commits: Array<{ phase: string; actualDuration: number }> = [];
+    const onRender: ProfilerOnRenderCallback = (_id, phase, actualDuration) => {
+      commits.push({ phase, actualDuration });
+    };
+    const { container } = render(
+      <Profiler id="progressive-large-object-form" onRender={onRender}>
+        <SchemaForm
+          schema={largeObjectSchema}
+          data={createLargeObjectData()}
+          options={{
+            virtualization: {
+              enabled: true,
+              objects: { enabled: true, threshold: 100, initialVisibleProperties: 25 }
+            }
+          }}
+        />
+      </Profiler>
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll(".raf-field").length).toBe(26);
+    });
+
+    const totalCommitDuration = commits.reduce((total, commit) => total + commit.actualDuration, 0);
+    console.info(
+      JSON.stringify({
+        propertyCount: LARGE_OBJECT_PROPERTY_COUNT,
+        mountedFields: container.querySelectorAll(".raf-field").length,
+        commitCount: commits.length,
+        totalCommitDurationMs: Number(totalCommitDuration.toFixed(2)),
+        commits
+      })
+    );
+
+    expect(container.querySelector(".raf-button-secondary")).not.toBeNull();
     expect(commits.length).toBeGreaterThan(0);
   });
 });

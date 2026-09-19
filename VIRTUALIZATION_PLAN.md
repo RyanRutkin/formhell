@@ -400,6 +400,10 @@ Implemented foundation:
 
 The remaining Phase 5 work is performance profiling and design review for very large object schemas before expanding the progressive API further.
 
+The Phase 5 benchmark now covers a 250-property object. With progressive rendering enabled and `initialVisibleProperties: 25`, it mounted 26 fields (one required field plus 25 optional fields) with approximately 4.2 ms total React commit duration in the jsdom benchmark environment. These values are environment-specific and are intended for comparison, not universal thresholds.
+
+Phase 5 is complete for progressive object disclosure. True object-property virtualization remains intentionally deferred unless future profiling shows that progressive disclosure is insufficient.
+
 - Keep required properties visible.
 - Keep invalid properties visible.
 - Render optional properties in batches.
@@ -509,5 +513,5 @@ Validation completed:
 - [x] Phase 2: built-in dependency-free virtualizer.
 - [x] Phase 3: public opt-in API.
 - [x] Phase 4: accessibility, focus, and mobile UX.
-- [ ] Phase 5: progressive large-object handling.
+- [x] Phase 5: progressive large-object handling.
 - [ ] Phase 6: future TanStack integration.
