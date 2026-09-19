@@ -1,4 +1,5 @@
-import { render, waitFor } from "@testing-library/react";
+import { render, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { SchemaForm, type JSONSchema } from "formhell";
 
 const schema: JSONSchema = {
@@ -99,5 +100,25 @@ describe("Built-in array virtualization", () => {
       expect(container.querySelectorAll(".raf-virtualized-collection").length).toBe(1);
     });
     expect(container.querySelectorAll(".raf-virtualized-collection-item").length).toBeLessThan(data.records.length);
+  });
+
+  it("moves focus to the next array item after removal", async () => {
+    const user = userEvent.setup();
+    const smallData = { records: [{ name: "First", value: 1 }, { name: "Second", value: 2 }] };
+    const { container } = render(<SchemaForm schema={schema} data={smallData} />);
+    const recordsField = await waitFor(() => {
+      const field = Array.from(container.querySelectorAll(".raf-field")).find(
+        (candidate) => candidate.querySelector(".raf-field-label")?.textContent?.trim() === "records"
+      );
+      expect(field).not.toBeUndefined();
+      return field as HTMLElement;
+    });
+    const removeButtons = within(recordsField).getAllByRole("button", { name: "Remove" });
+
+    await user.click(removeButtons[0]);
+
+    await waitFor(() => {
+      expect((document.activeElement as HTMLInputElement).value).toBe("Second");
+    });
   });
 });

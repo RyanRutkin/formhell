@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { SchemaFormArrayProps } from "../../types/components";
 import { useFormHellLocale } from "../../i18n/LocaleProvider";
 import { CollectionRenderer } from "../collections/CollectionRenderer";
@@ -22,6 +22,7 @@ export function SchemaFormArray({
   const { formatMessage } = useFormHellLocale();
   const items = Array.isArray(value) ? value : [];
   const hasUserModifiedRef = useRef(false);
+  const pendingFocusIndexRef = useRef<number | null>(null);
   const lastSignatureRef = useRef<string | null>(null);
   const maxItems = typeof schema.maxItems === "number" ? schema.maxItems : undefined;
   const initialItemCount = getInitialItemCount(schema.minItems, maxItems);
@@ -37,6 +38,21 @@ export function SchemaFormArray({
     : items;
   const showAddItem = !disabled && canAddItem !== false && renderedItems.length < (maxItems ?? Number.POSITIVE_INFINITY);
 
+  useEffect(() => {
+    const targetIndex = pendingFocusIndexRef.current;
+    if (targetIndex === null) {
+      return;
+    }
+
+    const target = document.querySelector<HTMLElement>(
+      `[data-raf-array-item-index="${targetIndex}"] button, [data-raf-array-item-index="${targetIndex}"] input, [data-raf-array-item-index="${targetIndex}"] select, [data-raf-array-item-index="${targetIndex}"] textarea`
+    );
+    if (target) {
+      target.focus();
+      pendingFocusIndexRef.current = null;
+    }
+  }, [renderedItems.length]);
+
   return (
     <FieldShell label={label} required={required} controls={controls}>
       <div>
@@ -48,7 +64,7 @@ export function SchemaFormArray({
             const itemPointer = `${pointer}/${index}`;
 
             return (
-            <div className="raf-array-item" key={itemPointer}>
+            <div className="raf-array-item" data-raf-array-item-index={index} key={itemPointer}>
               {renderItem(index, itemPointer, item)}
               {canRemoveItems === false ? null : (
                 <div className="raf-button-row">
@@ -58,6 +74,7 @@ export function SchemaFormArray({
                     disabled={disabled}
                     onClick={() => {
                       hasUserModifiedRef.current = true;
+                      pendingFocusIndexRef.current = Math.min(index, renderedItems.length - 2);
                       const next = [...renderedItems];
                       next.splice(index, 1);
                       onChange(next);

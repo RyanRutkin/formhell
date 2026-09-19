@@ -337,12 +337,13 @@ Implemented foundation:
 - Virtualized collections expose `role="list"` and virtual rows expose `role="listitem"`.
 - Rows expose `aria-setsize` and `aria-posinset` for screen readers.
 - Focus inside a mounted row scrolls that row into the nearest visible position.
+- Removing an array item moves focus to the next available item, or the previous item when the removed row was last.
 - Virtualized viewports use touch scrolling and a mobile `70vh` maximum height.
 
 Remaining before Phase 4 completion:
 
 - Scroll-to-validation-error behavior.
-- Predictable focus placement after add/remove.
+- Predictable focus placement after add/remove (removal is implemented; add focus remains).
 - Collection change announcements where needed.
 - Mobile expand/full-screen affordance evaluation.
 
