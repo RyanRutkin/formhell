@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type Key, type ReactNode, type RefCallback } from "react";
 import { useFormHellLocale } from "../../i18n/LocaleProvider";
+import type { FormHellVirtualizerFactory } from "../../types/components";
 import { useStableItemKeys } from "./useStableItemKeys";
 import { useVirtualRange } from "./useVirtualRange";
 
@@ -7,6 +8,7 @@ export interface CollectionVirtualizationOptions {
   height: number | string;
   estimateItemHeight: number;
   overscan: number;
+  virtualizer?: FormHellVirtualizerFactory;
 }
 
 interface CollectionRendererProps<TItem> {
@@ -15,10 +17,11 @@ interface CollectionRendererProps<TItem> {
   renderItem: (item: TItem, index: number) => ReactNode;
   virtualization?: CollectionVirtualizationOptions;
   scrollToIndex?: number;
+  preferItemKeys?: boolean;
 }
 
-export function CollectionRenderer<TItem>({ items, getItemKey, renderItem, virtualization, scrollToIndex }: CollectionRendererProps<TItem>) {
-  const stableKeys = useStableItemKeys(items, getItemKey);
+export function CollectionRenderer<TItem>({ items, getItemKey, renderItem, virtualization, scrollToIndex, preferItemKeys }: CollectionRendererProps<TItem>) {
+  const stableKeys = useStableItemKeys(items, getItemKey, preferItemKeys);
 
   if (!virtualization) {
     return (
@@ -56,11 +59,14 @@ function VirtualizedCollection<TItem>({
   const { formatMessage } = useFormHellLocale();
   const [isExpanded, setIsExpanded] = useState(false);
   const elementIndexes = useRef(new Map<Element, number>());
+  const measuredRefs = useRef(new Map<number, RefCallback<HTMLDivElement>>());
   const { range, setScrollElement, onScroll, measure, scrollToIndex: scrollToVirtualIndex } = useVirtualRange({
     count: items.length,
     estimateSize: virtualization.estimateItemHeight,
     overscan: virtualization.overscan,
-    initialViewportSize: typeof virtualization.height === "number" ? virtualization.height : 480
+    initialViewportSize: typeof virtualization.height === "number" ? virtualization.height : 480,
+    virtualizer: virtualization.virtualizer,
+    getItemKey: (index) => String(getItemKey(items[index], index))
   });
 
   useEffect(() => {
@@ -90,17 +96,26 @@ function VirtualizedCollection<TItem>({
     return () => observer.disconnect();
   }, [measure, range.endIndex, range.startIndex]);
 
-  const setMeasuredRef = (index: number): RefCallback<HTMLDivElement> => (element) => {
-    if (!element) {
-      for (const [trackedElement, trackedIndex] of elementIndexes.current.entries()) {
-        if (trackedIndex === index) {
-          elementIndexes.current.delete(trackedElement);
-        }
-      }
-      return;
+  const getMeasuredRef = (index: number): RefCallback<HTMLDivElement> => {
+    const existing = measuredRefs.current.get(index);
+    if (existing) {
+      return existing;
     }
-    elementIndexes.current.set(element, index);
-    measure(index, element.getBoundingClientRect().height);
+
+    const callback: RefCallback<HTMLDivElement> = (element) => {
+      if (!element) {
+        for (const [trackedElement, trackedIndex] of elementIndexes.current.entries()) {
+          if (trackedIndex === index) {
+            elementIndexes.current.delete(trackedElement);
+          }
+        }
+        return;
+      }
+      elementIndexes.current.set(element, index);
+      measure(index, element.getBoundingClientRect().height);
+    };
+    measuredRefs.current.set(index, callback);
+    return callback;
   };
 
   return (
@@ -130,7 +145,7 @@ function VirtualizedCollection<TItem>({
             return (
               <div
                 key={stableKeys[index]}
-                ref={setMeasuredRef(index)}
+                ref={getMeasuredRef(index)}
                 className="raf-virtualized-collection-item"
                 role="listitem"
                 aria-setsize={items.length}

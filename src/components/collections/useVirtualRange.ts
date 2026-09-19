@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type UIEvent } from "react";
+import type { FormHellVirtualizer, FormHellVirtualizerFactory, FormHellVirtualizerRange } from "../../types/components";
 
 export interface VirtualRange {
   startIndex: number;
@@ -20,31 +21,34 @@ interface UseVirtualRangeOptions {
   estimateSize: number;
   overscan: number;
   initialViewportSize: number;
+  virtualizer?: FormHellVirtualizerFactory;
+  getItemKey: (index: number) => string;
 }
 
-export function useVirtualRange({ count, estimateSize, overscan, initialViewportSize }: UseVirtualRangeOptions) {
+export function useVirtualRange({ count, estimateSize, overscan, initialViewportSize, virtualizer: factory, getItemKey }: UseVirtualRangeOptions) {
   const [scrollOffset, setScrollOffset] = useState(0);
   const [viewportSize, setViewportSize] = useState(initialViewportSize);
-  const [measuredSizes, setMeasuredSizes] = useState<Record<number, number>>({});
+  const [, setRevision] = useState(0);
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
   const safeEstimate = Math.max(1, estimateSize);
   const safeOverscan = Math.max(0, Math.floor(overscan));
-
-  const sizes = useMemo(
-    () => Array.from({ length: count }, (_, index) => measuredSizes[index] ?? safeEstimate),
-    [count, measuredSizes, safeEstimate]
+  const virtualizer = useMemo(
+    () =>
+      (factory ?? builtInVirtualizerFactory).create({
+        count,
+        estimateSize: safeEstimate,
+        overscan: safeOverscan,
+        getItemKey,
+        onRangeChange: () => setRevision((current) => current + 1)
+      }),
+    [count, factory, getItemKey, safeEstimate, safeOverscan]
   );
-  const offsets = useMemo(() => {
-    const next = new Array<number>(count + 1).fill(0);
-    for (let index = 0; index < count; index += 1) {
-      next[index + 1] = next[index] + sizes[index];
-    }
-    return next;
-  }, [count, sizes]);
+
+  useEffect(() => () => virtualizer.dispose?.(), [virtualizer]);
 
   const range = useMemo(
-    () => calculateVirtualRange({ count, sizes, scrollOffset, viewportSize, overscan: safeOverscan }),
-    [count, safeOverscan, scrollOffset, sizes, viewportSize]
+    () => virtualizer.getRange(scrollOffset, viewportSize),
+    [scrollOffset, virtualizer, viewportSize]
   );
 
   const setScrollElement = useCallback((element: HTMLDivElement | null) => {
@@ -61,8 +65,9 @@ export function useVirtualRange({ count, estimateSize, overscan, initialViewport
     }
 
     const roundedSize = Math.max(1, Math.ceil(size));
-    setMeasuredSizes((current) => (current[index] === roundedSize ? current : { ...current, [index]: roundedSize }));
-  }, []);
+    virtualizer.measure(index, roundedSize);
+    setRevision((current) => current + 1);
+  }, [virtualizer]);
 
   const scrollToIndex = useCallback(
     (index: number) => {
@@ -71,9 +76,13 @@ export function useVirtualRange({ count, estimateSize, overscan, initialViewport
         return;
       }
 
-      element.scrollTop = offsets[Math.max(0, Math.min(index, count - 1))];
+      const offset = virtualizer.scrollToIndex?.(index);
+      if (typeof offset === "number") {
+        element.scrollTop = offset;
+        setScrollOffset(offset);
+      }
     },
-    [count, offsets]
+    [count, virtualizer]
   );
 
   useEffect(() => {
@@ -100,6 +109,41 @@ export function useVirtualRange({ count, estimateSize, overscan, initialViewport
   }, []);
 
   return { range, setScrollElement, onScroll, measure, scrollToIndex };
+}
+
+const builtInVirtualizerFactory: FormHellVirtualizerFactory = {
+  create: (options) => createBuiltInVirtualizer(options)
+};
+
+function createBuiltInVirtualizer(options: Parameters<FormHellVirtualizerFactory["create"]>[0]): FormHellVirtualizer {
+  const sizes = new Array<number>(options.count).fill(Math.max(1, options.estimateSize));
+  let currentRange = calculateVirtualRange({
+    count: options.count,
+    sizes,
+    scrollOffset: 0,
+    viewportSize: options.estimateSize * 3,
+    overscan: options.overscan
+  });
+
+  return {
+    getRange: (scrollOffset, viewportSize) => {
+      currentRange = calculateVirtualRange({
+        count: options.count,
+        sizes,
+        scrollOffset,
+        viewportSize,
+        overscan: options.overscan
+      });
+      return currentRange;
+    },
+    measure: (index, size) => {
+      if (index >= 0 && index < sizes.length && size > 0) {
+        sizes[index] = Math.max(1, Math.ceil(size));
+      }
+    },
+    scrollToIndex: (index) => currentRange.getItemOffset(Math.max(0, Math.min(index, options.count - 1))),
+    dispose: () => undefined
+  };
 }
 
 export function calculateVirtualRange({

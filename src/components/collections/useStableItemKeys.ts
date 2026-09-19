@@ -1,13 +1,18 @@
 import { useRef } from "react";
 import type { Key } from "react";
 
-export function useStableItemKeys<TItem>(items: readonly TItem[], fallbackKey: (item: TItem, index: number) => Key): Key[] {
+export function useStableItemKeys<TItem>(
+  items: readonly TItem[],
+  fallbackKey: (item: TItem, index: number) => Key,
+  preferProvidedKeys = false
+): Key[] {
   const identityTokensRef = useRef(new Map<string, string>());
   const nextIdentityRef = useRef(0);
   const occurrenceCounts = new Map<string, number>();
 
   return items.map((item, index) => {
-    const fingerprint = createItemFingerprint(item, fallbackKey(item, index));
+    const providedKey = fallbackKey(item, index);
+    const fingerprint = preferProvidedKeys ? `provided:${String(providedKey)}` : createItemFingerprint(item, providedKey);
     const occurrence = occurrenceCounts.get(fingerprint) ?? 0;
     occurrenceCounts.set(fingerprint, occurrence + 1);
     const identityKey = `${fingerprint}::${occurrence}`;

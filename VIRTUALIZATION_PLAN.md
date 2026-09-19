@@ -66,7 +66,7 @@ export interface FormHellVirtualizer {
 }
 ```
 
-This is a target contract for the next API-design step, not a promise that these exact names are final. The final public version must document lifecycle ownership, measurement timing, range updates, error handling, stable keys, and whether `scrollToIndex` is required or optional.
+The public factory contract is now implemented and exported. It documents lifecycle ownership, measurement timing, range updates, stable keys, and scroll-to-index behavior without exposing TanStack types.
 
 Stable identity decision: rendered rows now receive internal structural identity tokens derived from item content and occurrence, with pointer/index as a fallback. User data is never mutated with an identity property. An explicit consumer `itemKey` resolver remains a future API refinement for domain-level identity such as an `id` field.
 
@@ -127,9 +127,9 @@ Initial default behavior:
 
 These defaults are a planning target. Final names and defaults should be settled after Phase 0 profiling and Phase 1 contract work.
 
-### Future: Path-Specific Array Configuration
+### Path-Specific Array Configuration
 
-Path-specific configuration is an intentional future API goal, but it must not block the current core implementation. The first public API uses global array virtualization settings; a later release can add exact JSON Pointer and wildcard overrides for applications with mixed collection sizes:
+Path-specific configuration is implemented as a later extension to the global array settings. It supports exact JSON Pointer and wildcard overrides for applications with mixed collection sizes:
 
 ```tsx
 <SchemaForm
@@ -159,7 +159,7 @@ Path-specific configuration is an intentional future API goal, but it must not b
 />
 ```
 
-Planned precedence is exact path, wildcard path, global array settings, then normal rendering. Wildcards are especially useful for repeated nested structures while allowing individual paths to opt out. This feature should be designed after the public adapter contract stabilizes and should not change the current core API.
+Precedence is exact path, wildcard path, global array settings, then normal rendering. Wildcards are especially useful for repeated nested structures while allowing individual paths to opt out. Nested arrays are only activated when a matching path rule explicitly selects them.
 
 ## README Documentation Deliverable
 
@@ -310,7 +310,7 @@ Phase 2 is complete.
 - Added focused tests for bounded mounting and threshold fallback.
 - Extended the Phase 0 benchmark with an eager versus virtualized comparison: 250 outer rows versus 8 mounted virtual rows in the jsdom environment.
 
-Phase 3 finalized the public virtualization options and validation. The next API-design task is to finalize and publish the supported virtualizer factory contract before implementing the TanStack package.
+Phase 3 finalized the public virtualization options and validation. The public virtualizer factory contract is now also implemented, exported, and available for custom engines.
 
 ### Phase 3 Implementation Notes
 
@@ -321,6 +321,9 @@ Phase 3 is complete.
 - Kept virtualization disabled by default.
 - Added README documentation for every public option, defaults, supported array shapes, mobile behavior, nested-array behavior, and the future TanStack boundary.
 - Kept TanStack out of the core package while reserving a public, library-owned virtualizer factory contract.
+- Added exact and wildcard path-specific array overrides.
+- Added optional domain-level `itemKey` resolution without mutating user data.
+- Added custom virtualizer factory injection through array configuration.
 - Added tests for enabled large arrays, threshold fallback, and invalid configuration fallback.
 
 Validation completed:
@@ -361,7 +364,7 @@ Expose the built-in virtualizer in a controlled, backward-compatible way.
 - [x] Support a conservative threshold.
 - [x] Validate or normalize invalid height and numeric options.
 - [x] Document unsupported cases such as tuple arrays.
-- Add a future-compatible `virtualizer` or renderer injection point only if the Phase 1 contract is stable. Avoid exposing TanStack types.
+- [x] Add the public `virtualizer` factory injection point without exposing TanStack types.
 
 ### Exit Criteria
 
@@ -534,13 +537,25 @@ Implemented:
 
 The remaining performance-test work is real-browser measurement and scroll-trace collection; the deterministic range and component behavior coverage is in place.
 
+### Real-Browser Benchmark Progress
+
+Added a dedicated benchmark page at `playground/benchmark.html`. It provides eager-array, virtualized-array, and progressive-object scenarios and reports mounted nodes, React commit duration, commit count, and an end-to-end sample.
+
+Initial browser run on the local Vite development server:
+
+- Eager array with 1,000 items: 4,001 mounted nodes, 360.40 ms React commit duration, 1,315.80 ms end-to-end sample.
+- Virtualized array with 1,000 items: 36 mounted nodes, 284.10 ms React commit duration, 1,202.20 ms end-to-end sample.
+- Progressive object with 500 properties: 26 mounted nodes, 5.90 ms React commit duration, 1,211.50 ms end-to-end sample.
+
+These measurements are machine- and browser-specific comparison data, not release thresholds. Future runs should use a production preview and add Playwright traces for scrolling and typing latency.
+
 ## Decisions To Revisit
 
 - Final public option names.
 - Whether `height` accepts CSS strings or requires a number.
-- Future path-specific array configuration with exact and wildcard paths is required, but is explicitly non-blocking for the current core implementation.
-- Stable identity for arrays whose items have no natural ID.
-- Future `itemKey` resolver semantics for domain-level identities and reorderable arrays.
+- Path-specific array configuration with exact and wildcard paths is implemented.
+- Stable identity for arrays whose items have no natural ID is implemented.
+- Future refinements to `itemKey` semantics for complex reorderable arrays remain possible.
 - Whether full-screen mobile mode belongs in core or a consumer-provided renderer.
 - The exact boundary between the future virtualizer adapter and full TanStack collection renderer.
 

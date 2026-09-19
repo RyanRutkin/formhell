@@ -153,7 +153,77 @@ Virtualization options:
 - `arrays.height`: CSS height or positive pixel height for the collection viewport. The default is `"min(70vh, 36rem)"`. A bounded viewport is required so the virtualizer can calculate visible rows.
 - `arrays.estimateItemHeight`: Initial row-height estimate in pixels. It affects the initial scrollbar size before mounted rows are measured. The default is `160`.
 - `arrays.overscan`: Number of extra rows mounted before and after the visible range. Higher values improve fast-scroll continuity but increase rendering work. The default is `4`.
+- `arrays.itemKey`: Optional resolver for domain-level row identity, such as an API object's `id`. JSON Pointer paths remain index-based for data semantics.
+- `arrays.virtualizer`: Optional `FormHellVirtualizerFactory` implementation. The built-in virtualizer remains the default.
 - `objects.enabled` and `objects.threshold`: Reserved for future progressive/object virtualization work and currently do not enable object-property virtualization.
+
+### Path-specific array configuration
+
+The global array settings are intentionally the first stable API. For applications with collections of very different sizes, use the later path-specific API to override them by exact JSON Pointer or wildcard path:
+
+```tsx
+<SchemaForm
+  schema={schema}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: { threshold: 100 },
+      paths: {
+        "/orders": {
+          threshold: 50,
+          height: "70vh"
+        },
+        "/orders/*/lineItems": {
+          threshold: 200,
+          height: "60vh"
+        },
+        "/metadata/history": {
+          enabled: false
+        }
+      }
+    }
+  }}
+/>
+```
+
+Path precedence is exact path, wildcard path, global array settings, then normal rendering. Nested arrays are only virtualized when explicitly selected by a matching path rule.
+
+### Custom virtualizer adapters
+
+The public adapter contract is dependency-free and does not expose TanStack types. A custom implementation can be supplied when the built-in renderer should use another range/measurement engine:
+
+```tsx
+import type { FormHellVirtualizerFactory } from "formhell";
+
+const virtualizer: FormHellVirtualizerFactory = {
+  create: ({ count, estimateSize, overscan, getItemKey }) => {
+    // Connect these inputs to your virtualization engine.
+    return {
+      getRange: (scrollOffset, viewportSize) => ({
+        startIndex: 0,
+        endIndex: Math.min(count - 1, 10),
+        totalSize: count * estimateSize,
+        getItemOffset: (index) => index * estimateSize
+      }),
+      measure: (index, size) => {},
+      scrollToIndex: (index) => index * estimateSize,
+      dispose: () => {}
+    };
+  }
+};
+
+<SchemaForm
+  schema={schema}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: { threshold: 100, overscan: 4, virtualizer }
+    }
+  }}
+/>
+```
+
+The factory is created independently for each collection. The core package remains free of TanStack dependencies; a future `formhell-virtualization-tanstack` package can implement this contract, and a later full-renderer plugin can replace collection rendering entirely.
 
 The built-in implementation measures mounted rows and supports variable-height nested object content. Nested arrays are not automatically virtualized, so a deeply nested schema does not create a stack of nested scroll areas. This keeps mobile interaction manageable. On mobile, use a responsive height such as `min(70vh, 36rem)` and consider providing a larger/full-screen collection experience at the application level.
 

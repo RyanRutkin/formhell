@@ -18,6 +18,8 @@ export function SchemaFormArray({
   renderItem,
   createDefaultItem,
   virtualization,
+  getItemKey,
+  preferItemKeys,
   validationErrors
 }: SchemaFormArrayProps) {
   const { formatMessage } = useFormHellLocale();
@@ -61,7 +63,8 @@ export function SchemaFormArray({
       <div>
         <CollectionRenderer
           items={renderedItems}
-          getItemKey={(_item, index) => `${pointer}/${index}`}
+          getItemKey={getItemKey ?? ((_item, index) => `${pointer}/${index}`)}
+          preferItemKeys={preferItemKeys}
           virtualization={virtualization}
           scrollToIndex={firstInvalidIndex}
           renderItem={(item, index) => {

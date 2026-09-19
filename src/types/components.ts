@@ -23,6 +23,8 @@ export interface SchemaFormArrayProps extends FieldComponentProps<unknown[]> {
   canAddItem?: boolean;
   canRemoveItems?: boolean;
   virtualization?: SchemaFormArrayVirtualizationOptions;
+  getItemKey?: (value: unknown, index: number) => string;
+  preferItemKeys?: boolean;
   renderItem: (index: number, pointer: string, value: unknown) => ReactNode;
   createDefaultItem: () => unknown;
 }
@@ -31,6 +33,43 @@ export interface SchemaFormArrayVirtualizationOptions {
   height: number | string;
   estimateItemHeight: number;
   overscan: number;
+  itemKey?: SchemaFormItemKeyResolver;
+  virtualizer?: FormHellVirtualizerFactory;
+}
+
+export interface SchemaFormItemKeyContext {
+  value: unknown;
+  index: number;
+  pointer: string;
+  schema: JSONSchema;
+}
+
+export type SchemaFormItemKeyResolver = (context: SchemaFormItemKeyContext) => string | number;
+
+export interface FormHellVirtualizerRange {
+  startIndex: number;
+  endIndex: number;
+  totalSize: number;
+  getItemOffset: (index: number) => number;
+}
+
+export interface FormHellVirtualizerCreateOptions {
+  count: number;
+  estimateSize: number;
+  overscan: number;
+  getItemKey: (index: number) => string;
+  onRangeChange?: (range: FormHellVirtualizerRange) => void;
+}
+
+export interface FormHellVirtualizer {
+  getRange: (scrollOffset: number, viewportSize: number) => FormHellVirtualizerRange;
+  measure: (index: number, size: number) => void;
+  scrollToIndex?: (index: number) => number | void;
+  dispose?: () => void;
+}
+
+export interface FormHellVirtualizerFactory {
+  create: (options: FormHellVirtualizerCreateOptions) => FormHellVirtualizer;
 }
 
 export type SchemaPointerWidget = ComponentType<any>;
@@ -54,18 +93,23 @@ export interface SchemaFormOptions {
 
 export interface SchemaFormVirtualizationOptions {
   enabled?: boolean;
-  arrays?: {
-    enabled?: boolean;
-    threshold?: number;
-    height?: number | string;
-    estimateItemHeight?: number;
-    overscan?: number;
-  };
+  arrays?: SchemaFormVirtualizationArrayOptions;
+  paths?: Record<string, SchemaFormVirtualizationArrayOptions>;
   objects?: {
     enabled?: boolean;
     threshold?: number;
     initialVisibleProperties?: number;
   };
+}
+
+export interface SchemaFormVirtualizationArrayOptions {
+    enabled?: boolean;
+    threshold?: number;
+    height?: number | string;
+    estimateItemHeight?: number;
+    overscan?: number;
+    itemKey?: SchemaFormItemKeyResolver;
+    virtualizer?: FormHellVirtualizerFactory;
 }
 
 export interface SchemaFormProps {

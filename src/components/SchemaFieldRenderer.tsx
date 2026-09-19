@@ -219,7 +219,8 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
       virtualization,
       arrayValue.length,
       virtualizationDepth,
-      Boolean(tupleItems)
+      Boolean(tupleItems),
+      pointer
     );
 
     return (
@@ -240,6 +241,19 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
         itemsSchema={singleItemsSchema}
         itemSchemas={itemSchemas}
         createDefaultItem={() => createDefaultValueForArrayItem(itemSchemas, arrayValue.length)}
+        getItemKey={(item, index) =>
+          virtualizationOptions?.itemKey
+            ? String(
+                virtualizationOptions.itemKey({
+                  value: item,
+                  index,
+                  pointer: joinPointer(pointer, String(index)),
+                  schema: tupleItems?.[index] ?? singleItemsSchema ?? { type: "string" }
+                })
+              )
+            : `${pointer}/${index}`
+        }
+        preferItemKeys={Boolean(virtualizationOptions?.itemKey)}
         renderItem={(index, itemPointer, itemValue) => (
           <SchemaFieldRenderer
             schema={tupleItems?.[index] ?? singleItemsSchema ?? { type: "string" }}

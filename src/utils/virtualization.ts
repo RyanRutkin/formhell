@@ -1,4 +1,8 @@
-import type { SchemaFormArrayVirtualizationOptions, SchemaFormVirtualizationOptions } from "../types/components";
+import type {
+  SchemaFormArrayVirtualizationOptions,
+  SchemaFormVirtualizationOptions
+} from "../types/components";
+import { toPointerTokens } from "./jsonPointer";
 
 export interface ResolvedArrayVirtualizationOptions extends SchemaFormArrayVirtualizationOptions {
   threshold: number;
@@ -13,13 +17,19 @@ export function resolveArrayVirtualizationOptions(
   options: SchemaFormVirtualizationOptions | undefined,
   itemCount: number,
   depth: number,
-  isTuple: boolean
+  isTuple: boolean,
+  pointer: string
 ): ResolvedArrayVirtualizationOptions | undefined {
-  if (options?.enabled !== true || depth !== 0 || isTuple) {
+  if (options?.enabled !== true || isTuple) {
     return undefined;
   }
 
-  const arrays = options.arrays;
+  const pathOptions = resolvePathOptions(options.paths, pointer);
+  if (depth !== 0 && !pathOptions) {
+    return undefined;
+  }
+
+  const arrays = mergeArrayOptions(options.arrays, pathOptions);
   if (arrays?.enabled === false) {
     return undefined;
   }
@@ -33,7 +43,45 @@ export function resolveArrayVirtualizationOptions(
   const estimateItemHeight = normalizePositiveNumber(arrays?.estimateItemHeight, DEFAULT_ESTIMATE_ITEM_HEIGHT);
   const overscan = normalizeNonNegativeInteger(arrays?.overscan, DEFAULT_OVERSCAN);
 
-  return { height, estimateItemHeight, overscan, threshold };
+  return { height, estimateItemHeight, overscan, threshold, itemKey: arrays?.itemKey, virtualizer: arrays?.virtualizer };
+}
+
+function mergeArrayOptions(
+  globalOptions: SchemaFormVirtualizationOptions["arrays"],
+  pathOptions: SchemaFormVirtualizationOptions["arrays"] | undefined
+): SchemaFormVirtualizationOptions["arrays"] {
+  return { ...globalOptions, ...pathOptions };
+}
+
+function resolvePathOptions(
+  paths: SchemaFormVirtualizationOptions["paths"],
+  pointer: string
+): SchemaFormVirtualizationOptions["arrays"] | undefined {
+  if (!paths) {
+    return undefined;
+  }
+
+  const exact = paths[pointer];
+  if (exact) {
+    return exact;
+  }
+
+  const pointerTokens = toPointerTokens(pointer);
+  let best: { score: number; value: SchemaFormVirtualizationOptions["arrays"] } | undefined;
+
+  for (const [path, value] of Object.entries(paths)) {
+    const pathTokens = toPointerTokens(path);
+    if (pathTokens.length !== pointerTokens.length || !pathTokens.every((token, index) => token === "*" || token === pointerTokens[index])) {
+      continue;
+    }
+
+    const score = pathTokens.filter((token) => token !== "*").length;
+    if (!best || score > best.score) {
+      best = { score, value };
+    }
+  }
+
+  return best?.value;
 }
 
 function normalizeHeight(value: number | string | undefined, fallback: number | string): number | string {

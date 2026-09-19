@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { SchemaForm, type JSONSchema } from "formhell";
+import { SchemaForm, type FormHellVirtualizerFactory, type JSONSchema } from "formhell";
 
 const schema: JSONSchema = {
   type: "object",
@@ -223,5 +223,113 @@ describe("Built-in array virtualization", () => {
       expect(inputsAfter[1]).toBe(inputsBefore[1]);
       expect(inputsAfter[1].value).toBe("Second");
     });
+  });
+
+  it("supports exact path overrides for array virtualization", async () => {
+    const { container } = render(
+      <SchemaForm
+        schema={schema}
+        data={data}
+        options={{
+          virtualization: {
+            enabled: true,
+            arrays: { threshold: 1000 },
+            paths: { "/records": { threshold: 100 } }
+          }
+        }}
+      />
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll(".raf-virtualized-collection").length).toBe(1);
+    });
+  });
+
+  it("supports wildcard overrides for explicitly selected nested arrays", async () => {
+    const nestedSchema: JSONSchema = {
+      type: "object",
+      properties: {
+        groups: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              values: { type: "array", items: { type: "string" } }
+            }
+          }
+        }
+      }
+    };
+    const nestedData = {
+      groups: [{ values: Array.from({ length: 120 }, (_, index) => `value-${index}`) }]
+    };
+
+    const { container } = render(
+      <SchemaForm
+        schema={nestedSchema}
+        data={nestedData}
+        options={{
+          virtualization: {
+            enabled: true,
+            paths: { "/groups/*/values": { threshold: 100 } }
+          }
+        }}
+      />
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll(".raf-virtualized-collection").length).toBe(1);
+    });
+  });
+
+  it("passes configured item keys to a custom virtualizer factory", async () => {
+    const seenKeys: string[] = [];
+    const factory: FormHellVirtualizerFactory = {
+      create: ({ count, getItemKey }) => {
+        seenKeys.push(getItemKey(0));
+        return {
+          getRange: () => ({
+            startIndex: 0,
+            endIndex: Math.min(1, count - 1),
+            totalSize: count * 160,
+            getItemOffset: (index) => index * 160
+          }),
+          measure: () => undefined,
+          scrollToIndex: () => 0,
+          dispose: () => undefined
+        };
+      }
+    };
+    const keyedSchema: JSONSchema = {
+      type: "object",
+      properties: { records: { type: "array", items: { type: "object", properties: { id: { type: "string" } } } } }
+    };
+    const keyedData = { records: Array.from({ length: 120 }, (_, index) => ({ id: `record-${index}` })) };
+
+    const { container } = render(
+      <SchemaForm
+        schema={keyedSchema}
+        data={keyedData}
+        options={{
+          virtualization: {
+            enabled: true,
+            arrays: {
+              threshold: 100,
+              virtualizer: factory,
+              itemKey: ({ value }) => {
+                const key = (value as { id: string }).id;
+                seenKeys.push(key);
+                return key;
+              }
+            }
+          }
+        }}
+      />
+    );
+
+    await waitFor(() => {
+      expect(container.querySelectorAll(".raf-virtualized-collection").length).toBe(1);
+    });
+    expect(seenKeys).toContain("record-0");
   });
 });
