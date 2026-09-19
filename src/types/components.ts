@@ -62,6 +62,10 @@ export interface SchemaFormProps {
 export interface SchemaFormValidationError {
   message: string;
   source: "schema" | "peerSchemas" | "ref-resolution" | "data";
+  keyword?: string;
+  instancePath?: string;
+  schemaPath?: string;
+  params?: Record<string, unknown>;
 }
 
 export interface SchemaBuilderProps {

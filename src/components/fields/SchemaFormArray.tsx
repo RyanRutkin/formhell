@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import type { SchemaFormArrayProps } from "../../types/components";
+import { useFormHellLocale } from "../../i18n/LocaleProvider";
 import { FieldShell } from "./FieldShell";
 
 export function SchemaFormArray({
@@ -16,6 +17,7 @@ export function SchemaFormArray({
   renderItem,
   createDefaultItem
 }: SchemaFormArrayProps) {
+  const { formatMessage } = useFormHellLocale();
   const items = Array.isArray(value) ? value : [];
   const hasUserModifiedRef = useRef(false);
   const lastSignatureRef = useRef<string | null>(null);
@@ -55,7 +57,7 @@ export function SchemaFormArray({
                       onChange(next);
                     }}
                   >
-                    Remove
+                    {formatMessage("array.remove")}
                   </button>
                 </div>
               )}
@@ -72,7 +74,7 @@ export function SchemaFormArray({
               onChange(next);
             }}
           >
-            Add Item
+            {formatMessage("array.addItem")}
           </button>
         ) : null}
       </div>

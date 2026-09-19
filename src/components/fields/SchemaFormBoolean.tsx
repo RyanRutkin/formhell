@@ -1,7 +1,10 @@
 import type { FieldComponentProps } from "../../types/components";
+import { useFormHellLocale } from "../../i18n/LocaleProvider";
 import { FieldShell } from "./FieldShell";
 
 export function SchemaFormBoolean({ label, required, value, disabled, controls, onChange }: FieldComponentProps<boolean>) {
+  const { formatMessage } = useFormHellLocale();
+
   return (
     <FieldShell label={label} required={required} controls={controls}>
       <label className="raf-checkbox-row">
@@ -12,7 +15,7 @@ export function SchemaFormBoolean({ label, required, value, disabled, controls, 
           disabled={disabled}
           onChange={(event) => onChange(event.target.checked)}
         />
-        <span>{value ? "True" : "False"}</span>
+        <span>{value ? formatMessage("boolean.trueLabel") : formatMessage("boolean.falseLabel")}</span>
       </label>
     </FieldShell>
   );

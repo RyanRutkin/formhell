@@ -70,13 +70,28 @@ export function validatePeerSchemasOrThrow(peerSchemas?: PeerSchemasInput): void
   }
 }
 
-export function validateDataOrThrow(data: unknown, schema: JSONSchema): void {
+export interface DataValidationIssue {
+  message: string;
+  keyword?: string;
+  instancePath?: string;
+  schemaPath?: string;
+  params?: Record<string, unknown>;
+}
+
+export function collectDataValidationIssues(data: unknown, schema: JSONSchema): DataValidationIssue[] {
   const ajv = createAjvForSchema(schema);
   const validate = ajv.compile(schema);
-  const valid = validate(data);
 
-  if (!valid) {
-    const errors = ajv.errorsText(validate.errors, { separator: "; " });
-    throw new Error(`Provided data does not match schema. ${errors}`.trim());
+  if (validate(data)) {
+    return [];
   }
+
+  return (validate.errors ?? []).map((error) => ({
+    // Mirrors Ajv's errorsText() phrasing so the default message stays readable.
+    message: `data${error.instancePath} ${error.message ?? "is invalid"}`,
+    keyword: error.keyword,
+    instancePath: error.instancePath,
+    schemaPath: error.schemaPath,
+    params: error.params as Record<string, unknown>
+  }));
 }
