@@ -27,9 +27,9 @@ export interface JSONSchema {
   dependentSchemas?: Record<string, JSONSchema>;
   items?: JSONSchema | boolean;
   prefixItems?: JSONSchema[];
-  unevaluatedItems?: JSONSchema;
+  unevaluatedItems?: JSONSchema | boolean;
   additionalProperties?: boolean | JSONSchema;
-  unevaluatedProperties?: JSONSchema;
+  unevaluatedProperties?: JSONSchema | boolean;
   propertyNames?: JSONSchema;
   oneOf?: JSONSchema[];
   anyOf?: JSONSchema[];

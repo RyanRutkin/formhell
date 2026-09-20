@@ -52,33 +52,34 @@ export function setValueAtPointer(source: unknown, pointer: string, value: unkno
     return value;
   }
 
-  const root = deepClone(source);
-  let current: any = root;
+  return cloneAlongPath(source, tokens, 0, value);
+}
 
-  for (let index = 0; index < tokens.length - 1; index += 1) {
-    const token = tokens[index];
-    const nextToken = tokens[index + 1];
+// Structural sharing: only the containers along the pointer path are copied, every untouched subtree keeps
+// its reference. The root is always a new reference so React state updates still register.
+function cloneAlongPath(node: unknown, tokens: string[], index: number, value: unknown): unknown {
+  const token = tokens[index];
+  const container = shallowCopyContainer(node, token);
 
-    if (current[token] === undefined || current[token] === null) {
-      current[token] = isArrayIndexToken(nextToken) ? [] : {};
-    }
+  container[token] = index === tokens.length - 1
+    ? value
+    : cloneAlongPath(container[token], tokens, index + 1, value);
 
-    current = current[token];
+  return container;
+}
+
+function shallowCopyContainer(node: unknown, token: string): any {
+  if (Array.isArray(node)) {
+    return node.slice();
   }
 
-  const leafToken = tokens[tokens.length - 1];
-  current[leafToken] = value;
-  return root;
+  if (typeof node === "object" && node !== null) {
+    return { ...(node as Record<string, unknown>) };
+  }
+
+  return isArrayIndexToken(token) ? [] : {};
 }
 
 function isArrayIndexToken(token: string): boolean {
   return /^\d+$/.test(token);
-}
-
-function deepClone<T>(value: T): T {
-  if (typeof structuredClone === "function") {
-    return structuredClone(value);
-  }
-
-  return JSON.parse(JSON.stringify(value)) as T;
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { SchemaFormArrayProps } from "../../types/components";
 import { useFormHellLocale } from "../../i18n/LocaleProvider";
 import { CollectionRenderer } from "../collections/CollectionRenderer";
+import { useItemIdentities } from "../collections/useItemIdentities";
 import { FieldShell } from "./FieldShell";
 
 export function SchemaFormArray({
@@ -14,6 +15,7 @@ export function SchemaFormArray({
   controls,
   canAddItem,
   canRemoveItems,
+  lockedItemCount = 0,
   onChange,
   renderItem,
   createDefaultItem,
@@ -40,6 +42,7 @@ export function SchemaFormArray({
   const renderedItems = items.length === 0 && !hasUserModifiedRef.current
     ? Array.from({ length: initialItemCount }, () => createDefaultItem())
     : items;
+  const itemIdentities = useItemIdentities(renderedItems.length);
   const showAddItem = !disabled && canAddItem !== false && renderedItems.length < (maxItems ?? Number.POSITIVE_INFINITY);
   const firstInvalidIndex = valueErrorsIndex(pointer, validationErrors);
   const scrollTargetIndex = firstInvalidIndex ?? pendingFocusIndexRef.current ?? undefined;
@@ -79,15 +82,16 @@ export function SchemaFormArray({
           items={renderedItems}
           getItemKey={getItemKey ?? ((_item, index) => `${pointer}/${index}`)}
           preferItemKeys={preferItemKeys}
+          getStableKey={itemIdentities.getKey}
           virtualization={virtualization}
           scrollToIndex={scrollTargetIndex}
           renderItem={(item, index) => {
             const itemPointer = `${pointer}/${index}`;
 
             return (
-            <div className="raf-array-item" data-raf-array-item-index={index} key={itemPointer}>
+            <div className="raf-array-item" data-raf-array-item-index={index}>
               {renderItem(index, itemPointer, item)}
-              {canRemoveItems === false ? null : (
+              {canRemoveItems === false || index < lockedItemCount ? null : (
                 <div className="raf-button-row">
                   <button
                     className="raf-button raf-button-danger"
@@ -99,6 +103,7 @@ export function SchemaFormArray({
                       setAnnouncement(formatMessage("array.itemRemoved", { index: index + 1 }));
                       const next = [...renderedItems];
                       next.splice(index, 1);
+                      itemIdentities.removeAt(index);
                       onChange(next);
                     }}
                   >
@@ -119,6 +124,7 @@ export function SchemaFormArray({
               pendingFocusIndexRef.current = renderedItems.length;
               setAnnouncement(formatMessage("array.itemAdded", { index: renderedItems.length + 1 }));
               const next = [...renderedItems, createDefaultItem()];
+              itemIdentities.insertAt(renderedItems.length);
               onChange(next);
             }}
           >

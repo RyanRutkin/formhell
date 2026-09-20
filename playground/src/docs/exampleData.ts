@@ -120,7 +120,7 @@ export const advancedExampleSchema: JSONSchema = {
   dependentRequired: {
     role: ["tags"]
   },
-  if: { properties: { role: { const: "admin" } } },
+  if: { required: ["role"], properties: { role: { const: "admin" } } },
   then: {
     properties: {
       metadata: {
