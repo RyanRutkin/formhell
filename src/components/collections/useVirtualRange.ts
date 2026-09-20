@@ -28,15 +28,25 @@ interface UseVirtualRangeOptions {
 export function useVirtualRange({ count, estimateSize, overscan, initialViewportSize, virtualizer: factory, getItemKey }: UseVirtualRangeOptions) {
   const [scrollOffset, setScrollOffset] = useState(0);
   const [viewportSize, setViewportSize] = useState(initialViewportSize);
-  const [, setRevision] = useState(0);
+  const [revision, setRevision] = useState(0);
   const scrollElementRef = useRef<HTMLDivElement | null>(null);
   const getItemKeyRef = useRef(getItemKey);
   const pendingRangeRef = useRef<FormHellVirtualizerRange | null>(null);
+  const revisionQueuedRef = useRef(false);
   getItemKeyRef.current = getItemKey;
   const safeEstimate = Math.max(1, estimateSize);
   const safeOverscan = Math.max(0, Math.floor(overscan));
   const onRangeChange = useCallback((range: FormHellVirtualizerRange) => {
     pendingRangeRef.current = range;
+    if (revisionQueuedRef.current) {
+      return;
+    }
+
+    revisionQueuedRef.current = true;
+    queueMicrotask(() => {
+      revisionQueuedRef.current = false;
+      setRevision((current) => current + 1);
+    });
   }, []);
   const virtualizer = useMemo(
     () =>
@@ -53,14 +63,16 @@ export function useVirtualRange({ count, estimateSize, overscan, initialViewport
   useEffect(() => () => virtualizer.dispose?.(), [virtualizer]);
 
   const range = useMemo(
-    () => virtualizer.getRange(scrollOffset, viewportSize),
-    [scrollOffset, virtualizer, viewportSize]
+    () => {
+      const calculatedRange = virtualizer.getRange(scrollOffset, viewportSize);
+      return pendingRangeRef.current ?? calculatedRange;
+    },
+    [revision, scrollOffset, virtualizer, viewportSize]
   );
 
   useEffect(() => {
-    if (pendingRangeRef.current) {
+    if (pendingRangeRef.current === range) {
       pendingRangeRef.current = null;
-      setRevision((current) => current + 1);
     }
   }, [range]);
 

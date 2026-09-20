@@ -42,6 +42,7 @@ export function SchemaFormArray({
     : items;
   const showAddItem = !disabled && canAddItem !== false && renderedItems.length < (maxItems ?? Number.POSITIVE_INFINITY);
   const firstInvalidIndex = valueErrorsIndex(pointer, validationErrors);
+  const scrollTargetIndex = firstInvalidIndex ?? pendingFocusIndexRef.current ?? undefined;
 
   useEffect(() => {
     const targetIndex = pendingFocusIndexRef.current;
@@ -49,13 +50,26 @@ export function SchemaFormArray({
       return;
     }
 
-    const target = document.querySelector<HTMLElement>(
-      `[data-raf-array-item-index="${targetIndex}"] button, [data-raf-array-item-index="${targetIndex}"] input, [data-raf-array-item-index="${targetIndex}"] select, [data-raf-array-item-index="${targetIndex}"] textarea`
-    );
-    if (target) {
-      target.focus();
-      pendingFocusIndexRef.current = null;
-    }
+    let frame: number | undefined;
+    const focusTarget = () => {
+      const target = document.querySelector<HTMLElement>(
+        `[data-raf-array-item-index="${targetIndex}"] input, [data-raf-array-item-index="${targetIndex}"] select, [data-raf-array-item-index="${targetIndex}"] textarea, [data-raf-array-item-index="${targetIndex}"] button`
+      );
+      if (target) {
+        target.focus();
+        pendingFocusIndexRef.current = null;
+        return;
+      }
+
+      frame = requestAnimationFrame(focusTarget);
+    };
+
+    focusTarget();
+    return () => {
+      if (frame !== undefined) {
+        cancelAnimationFrame(frame);
+      }
+    };
   }, [renderedItems.length]);
 
   return (
@@ -66,7 +80,7 @@ export function SchemaFormArray({
           getItemKey={getItemKey ?? ((_item, index) => `${pointer}/${index}`)}
           preferItemKeys={preferItemKeys}
           virtualization={virtualization}
-          scrollToIndex={firstInvalidIndex}
+          scrollToIndex={scrollTargetIndex}
           renderItem={(item, index) => {
             const itemPointer = `${pointer}/${index}`;
 

@@ -165,6 +165,34 @@ describe("Built-in array virtualization", () => {
     });
   });
 
+  it("scrolls to and focuses an appended item in a virtualized array", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <SchemaForm
+        schema={schema}
+        data={data}
+        options={{ virtualization: { enabled: true, arrays: { threshold: 100, height: 480, estimateItemHeight: 160 } } }}
+      />
+    );
+
+    const recordsField = await waitFor(() => {
+      const field = Array.from(container.querySelectorAll(".raf-field")).find(
+        (candidate) => candidate.querySelector(".raf-field-label")?.textContent?.trim() === "records"
+      );
+      expect(field).not.toBeUndefined();
+      return field as HTMLElement;
+    });
+
+    await user.click(within(recordsField).getByRole("button", { name: "Add Item" }));
+
+    await waitFor(() => {
+      const newItem = container.querySelector<HTMLElement>('[data-raf-array-item-index="120"]');
+      expect(newItem).not.toBeNull();
+      expect(newItem?.querySelector("input")).toBe(document.activeElement);
+      expect(container.querySelector<HTMLElement>(".raf-virtualized-collection")?.scrollTop).toBeGreaterThan(0);
+    });
+  });
+
   it("progressively reveals optional properties in a large object", async () => {
     const user = userEvent.setup();
     const objectSchema: JSONSchema = {
@@ -375,6 +403,40 @@ describe("Built-in array virtualization", () => {
     } finally {
       consoleErrorSpy.mockRestore();
     }
+  });
+
+  it("renders a custom range supplied through a range-change notification", async () => {
+    let notifyRange: ((range: { startIndex: number; endIndex: number; totalSize: number; getItemOffset: (index: number) => number }) => void) | undefined;
+    const factory: FormHellVirtualizerFactory = {
+      create: ({ count, onRangeChange }) => {
+        notifyRange = onRangeChange;
+        return {
+          getRange: () => ({
+            startIndex: 0,
+            endIndex: 1,
+            totalSize: count * 160,
+            getItemOffset: (index) => index * 160
+          }),
+          measure: () => undefined
+        };
+      }
+    };
+
+    const { container } = render(
+      <SchemaForm
+        schema={schema}
+        data={data}
+        options={{ virtualization: { enabled: true, arrays: { threshold: 100, virtualizer: factory } } }}
+      />
+    );
+
+    await waitFor(() => expect(container.querySelectorAll(".raf-virtualized-collection-item").length).toBe(2));
+    notifyRange?.({ startIndex: 10, endIndex: 11, totalSize: data.records.length * 160, getItemOffset: (index) => index * 160 });
+
+    await waitFor(() => {
+      expect(container.querySelector('[data-virtualized-index="10"]')).not.toBeNull();
+      expect(container.querySelector('[data-virtualized-index="0"]')).toBeNull();
+    });
   });
 
   it("disposes a custom virtualizer when the form unmounts", async () => {
