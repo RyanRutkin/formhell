@@ -4,11 +4,33 @@ export { SchemaForm } from "./components/SchemaForm";
 export { SchemaBuilder } from "./components/SchemaBuilder";
 export { SchemaBuilderHelper } from "./components/SchemaBuilder";
 
+export { FormHellLocaleProvider, useFormHellLocale, resolveDirection } from "./i18n/LocaleProvider";
+export { defaultMessages } from "./i18n/messages";
+
+export type { FormHellMessages } from "./i18n/messages";
+export type {
+	FormHellLocaleContextValue,
+	FormHellLocaleProviderProps,
+	FormHellMessagesOverride,
+	FormHellMessageValues,
+	FormHellTextDirection,
+	FormHellTranslate
+} from "./i18n/LocaleProvider";
+
 export type { JSONSchema, JSONSchemaType, OutputData, PeerSchemasInput } from "./types/schema";
 export type {
 	SchemaFormProps,
 	SchemaFormWidgets,
 	SchemaFormOptions,
+	SchemaFormArrayVirtualizationOptions,
+	SchemaFormItemKeyContext,
+	SchemaFormItemKeyResolver,
+	FormHellVirtualizerRange,
+	FormHellVirtualizerCreateOptions,
+	FormHellVirtualizer,
+	FormHellVirtualizerFactory,
+	SchemaFormVirtualizationArrayOptions,
+	SchemaFormVirtualizationOptions,
 	SchemaFormValidationError,
 	SchemaBuilderProps,
 	SchemaBuilderHelperProps,

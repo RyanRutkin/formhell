@@ -7,6 +7,15 @@ const playgroundNodeModules = path.resolve(__dirname, "node_modules");
 export default defineConfig({
   plugins: [react()],
   base: "./",
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+        playground: path.resolve(__dirname, "playground.html"),
+        benchmark: path.resolve(__dirname, "benchmark.html")
+      }
+    }
+  },
   resolve: {
     dedupe: ["react", "react-dom"],
     alias: {

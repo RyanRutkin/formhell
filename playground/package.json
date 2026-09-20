@@ -4,11 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --open /playground.html",
+    "dev:docs": "vite --open /",
     "build": "vite build",
     "check:imports": "vite build --logLevel error --emptyOutDir false",
     "preview": "vite preview",
     "test": "vitest run"
+    ,"benchmark:virtualization": "vitest run src/virtualization.baseline.test.tsx --reporter=verbose"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

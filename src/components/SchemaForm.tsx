@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { SchemaFormProps, SchemaFormValidationError } from "../types/components";
 import type { JSONSchema, OutputData, PeerSchemasInput } from "../types/schema";
+import { useFormHellLocale } from "../i18n/LocaleProvider";
 import { createDefaultValueFromSchema } from "../utils/defaultData";
 import { getValueAtPointer, setValueAtPointer } from "../utils/jsonPointer";
 import { MissingPeerSchemaError, resolveSchemaRefs } from "../utils/refResolver";
-import { validateDataOrThrow, validatePeerSchemasOrThrow, validateSchemaOrThrow } from "../utils/schemaValidation";
+import { collectDataValidationIssues, validatePeerSchemasOrThrow, validateSchemaOrThrow } from "../utils/schemaValidation";
 import { SchemaFieldRenderer } from "./SchemaFieldRenderer";
 
 export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, data, onChange }: SchemaFormProps) {
+  const { formatMessage, direction } = useFormHellLocale();
   const onChangeRef = useRef(onChange);
   const [resolvedSchema, setResolvedSchema] = useState<JSONSchema | null>(null);
   const [resolutionError, setResolutionError] = useState<Error | null>(null);
   const [isWaitingForPeerSchemas, setIsWaitingForPeerSchemas] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<SchemaFormValidationError[]>([]);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -91,6 +94,7 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
 
     setFormData(initialData);
     const validationErrors = getDataValidationErrors(initialData, resolvedSchema);
+    setValidationErrors(validationErrors);
     onChangeRef.current?.(initialData, validationErrors, "", undefined, initialData);
   }, [initialData, resolvedSchema]);
 
@@ -104,6 +108,7 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
     const validationErrors = getDataValidationErrors(updated, resolvedSchema);
 
     setFormData(updated);
+    setValidationErrors(validationErrors);
     onChangeRef.current?.(updated, validationErrors, pointer, previousValue, next);
   };
 
@@ -115,26 +120,28 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
     return (
       <div className="raf-loading-state" role="status" aria-live="polite">
         <span className="raf-loading-spinner" aria-hidden="true" />
-        <span>Waiting for required peer schema(s)</span>
+        <span>{formatMessage("status.waitingForPeerSchemas")}</span>
       </div>
     );
   }
 
   if (!resolvedSchema) {
-    return <div className="raf-muted">Resolving schema references...</div>;
+    return <div className="raf-muted">{formatMessage("status.resolvingRefs")}</div>;
   }
 
   return (
-    <div className="raf-schema-form">
+    <div className="raf-schema-form" dir={direction === "rtl" ? "rtl" : undefined}>
       <SchemaFieldRenderer
         schema={resolvedSchema}
-        label={resolvedSchema.title ?? "Schema Form"}
+        label={resolvedSchema.title ?? formatMessage("form.defaultTitle")}
         required={true}
         pointer=""
         schemaPointer=""
         value={formData}
         onChange={handleFieldChange}
         widgets={widgets}
+        virtualization={options?.virtualization}
+        validationErrors={validationErrors}
       />
     </div>
   );
@@ -142,13 +149,15 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
 
 function getDataValidationErrors(data: unknown, schema: JSONSchema): SchemaFormValidationError[] {
   try {
-    validateDataOrThrow(data, schema);
-    return [];
+    return collectDataValidationIssues(data, schema).map((issue) => ({
+      ...issue,
+      source: "data" as const
+    }));
   } catch (error) {
     return [
       {
         message: error instanceof Error ? error.message : "Validation error",
-        source: "data"
+        source: "schema"
       }
     ];
   }

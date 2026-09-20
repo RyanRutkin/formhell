@@ -65,63 +65,6 @@ import { SchemaForm, SchemaBuilder, SchemaBuilderHelper } from "formhell";
 import "formhell/styles.css";
 ```
 
-## Theming
-
-FormHell does not depend on Material UI or any other styling framework. Importing `formhell/styles.css` gives the components a complete default theme, so the library works without a provider or theme package.
-
-The components are also designed to participate in a host application's theme. Their styles use CSS custom properties with fallbacks, which means an application can override the FormHell variables at any scope that contains a `SchemaForm`, `SchemaBuilder`, or `SchemaBuilderHelper`:
-
-```css
-.checkout-form {
-  --raf-color-border: #6b7280;
-  --raf-color-border-focus: #0f766e;
-  --raf-color-label: #102a43;
-  --raf-color-muted: #52657a;
-  --raf-color-surface: #ffffff;
-  --raf-color-surface-alt: #f3f6fb;
-  --raf-color-danger: #b42318;
-}
-```
-
-### Optional Material UI integration
-
-When a Material UI theme is present, FormHell automatically consumes MUI's generated CSS variables. Create the theme with `cssVariables: true` and place the FormHell components inside the `ThemeProvider`:
-
-```tsx
-import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
-import { SchemaForm } from "formhell";
-import "formhell/styles.css";
-
-const theme = createTheme({
-  cssVariables: true,
-  palette: {
-    primary: { main: "#1976d2" },
-    secondary: { main: "#526d82" },
-    error: { main: "#b42318" },
-    background: { default: "#f3f6fb", paper: "#ffffff" },
-    text: { primary: "#172b4d", secondary: "#52657a" }
-  }
-});
-
-<ThemeProvider theme={theme}>
-  <CssBaseline />
-  <SchemaForm schema={schema} />
-</ThemeProvider>;
-```
-
-FormHell maps the available MUI variables to its component roles:
-
-- `background.paper` controls form inputs, builder controls, modals, and helper surfaces.
-- `background.default` controls nested objects, builder sections, typeahead menus, and previews.
-- `text.primary` controls labels, headings, input text, and body content.
-- `text.secondary` controls optional labels, summaries, muted copy, and empty states.
-- `divider` controls borders.
-- `primary.main` controls primary actions, focus rings, selected type buttons, and links.
-- `secondary.main` controls secondary actions such as Add Type, info buttons, and tooltip Close buttons.
-- `error.main` controls danger actions, validation errors, and error states.
-
-MUI is intentionally not listed as a FormHell dependency. Applications that use another theme system can provide the same CSS custom properties, and applications without a theme continue using FormHell's built-in fallbacks.
-
 ## Exported Components At A Glance
 
 - `SchemaForm`: Render data-entry forms from JSON Schema.
@@ -179,6 +122,165 @@ Choose how aggressively defaults are generated.
   options={{ defaults: "required-only" }}
 />
 ```
+
+#### `options.virtualization?: SchemaFormVirtualizationOptions`
+
+Virtualization is opt-in and is disabled by default. When enabled, FormHell virtualizes large homogeneous arrays while preserving the normal renderer for small arrays, tuple arrays, and nested arrays.
+
+```tsx
+<SchemaForm
+  schema={schema}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: {
+        enabled: true,
+        threshold: 100,
+        height: "min(70vh, 36rem)",
+        estimateItemHeight: 160,
+        overscan: 4
+      }
+    }
+  }}
+/>;
+```
+
+Virtualization options:
+
+- `enabled`: Enables the built-in dependency-free virtualizer. Defaults to `false`.
+- `arrays.enabled`: Enables or disables array virtualization independently. Defaults to enabled when `virtualization.enabled` is `true`.
+- `arrays.threshold`: Minimum item count before virtualization activates. Smaller arrays use normal rendering. The default is `100`.
+- `arrays.height`: CSS height or positive pixel height for the collection viewport. The default is `"min(70vh, 36rem)"`. A bounded viewport is required so the virtualizer can calculate visible rows.
+- `arrays.estimateItemHeight`: Initial row-height estimate in pixels. It affects the initial scrollbar size before mounted rows are measured. The default is `160`.
+- `arrays.overscan`: Number of extra rows mounted before and after the visible range. Higher values improve fast-scroll continuity but increase rendering work. The default is `4`.
+- `arrays.itemKey`: Optional resolver for domain-level row identity, such as an API object's `id`. JSON Pointer paths remain index-based for data semantics.
+- `arrays.virtualizer`: Optional `FormHellVirtualizerFactory` implementation. The built-in virtualizer remains the default.
+- `objects.enabled`: Enables progressive disclosure for large top-level objects. This does not virtualize object properties.
+- `objects.threshold`: Minimum property count before progressive disclosure activates. The default is `100`.
+- `objects.initialVisibleProperties`: Number of optional properties shown initially. Required properties remain visible. The default is `25`.
+
+### Path-specific array configuration
+
+For applications with collections of very different sizes, override global array settings by exact JSON Pointer or wildcard path:
+
+```tsx
+<SchemaForm
+  schema={schema}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: { threshold: 100 },
+      paths: {
+        "/orders": {
+          threshold: 50,
+          height: "70vh"
+        },
+        "/orders/*/lineItems": {
+          threshold: 200,
+          height: "60vh"
+        },
+        "/metadata/history": {
+          enabled: false
+        }
+      }
+    }
+  }}
+/>
+```
+
+Path precedence is exact path, wildcard path, global array settings, then normal rendering. Nested arrays are only virtualized when explicitly selected by a matching path rule.
+
+### Custom virtualizer adapters
+
+The public adapter contract is dependency-free. A custom implementation can be supplied when the built-in renderer should use another range/measurement engine:
+
+```tsx
+import type { FormHellVirtualizerFactory } from "formhell";
+
+const virtualizer: FormHellVirtualizerFactory = {
+  create: ({ count, estimateSize, overscan, getItemKey }) => {
+    // Connect these inputs to your virtualization engine.
+    return {
+      getRange: (scrollOffset, viewportSize) => ({
+        startIndex: 0,
+        endIndex: Math.min(count - 1, 10),
+        totalSize: count * estimateSize,
+        getItemOffset: (index) => index * estimateSize
+      }),
+      measure: (index, size) => {},
+      scrollToIndex: (index) => index * estimateSize,
+      dispose: () => {}
+    };
+  }
+};
+
+<SchemaForm
+  schema={schema}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: { threshold: 100, overscan: 4, virtualizer }
+    }
+  }}
+/>
+```
+
+The factory is created independently for each collection. `getItemKey` receives the configured row identity for each index.
+
+The built-in implementation measures mounted rows and supports variable-height nested object content. Nested arrays are not automatically virtualized, so a deeply nested schema does not create a stack of nested scroll areas. This keeps mobile interaction manageable. On mobile, use a responsive height such as `min(70vh, 36rem)` and consider providing a larger/full-screen collection experience at the application level.
+
+Invalid numeric values are normalized to safe defaults. Tuple arrays (`prefixItems`) and arrays below the threshold remain on the normal rendering path.
+
+When `itemKey` is not provided, FormHell maintains internal row identity without adding metadata to your data. JSON Pointer paths still use array indexes, while React/virtualizer identity is tracked separately. Provide `itemKey` when your data has a stable domain identifier and items can be reordered.
+
+For reorderable arrays, or arrays containing duplicate objects, the recommended approach is to provide a stable domain key. Structural fallback identity cannot distinguish identical duplicate values reliably after insertion, removal, or reordering, which can affect React row continuity, focus, or measurement-cache reuse. The fallback does not corrupt JSON Pointer data, but domain identity gives the strongest behavior:
+
+```tsx
+<SchemaForm
+  schema={schema}
+  data={data}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: {
+        threshold: 100,
+        itemKey: ({ value, pointer }) =>
+          typeof value === "object" &&
+          value !== null &&
+          "id" in value &&
+          (typeof value.id === "string" || typeof value.id === "number")
+            ? String(value.id)
+            : pointer
+      }
+    }
+  }}
+  onChange={(nextData, validationErrors, fieldPointer, previousValue, nextValue) => {
+    // Sync nextData with application state and handle validationErrors.
+    console.log({ nextData, validationErrors, fieldPointer, previousValue, nextValue });
+  }}
+/>;
+```
+
+The resolver must return a unique, stable value for each sibling item. Do not generate a random UUID during render; that changes the React key on every render and causes rows to remount. Do not add an internal identity property to the JSON data.
+
+### Supported shapes and nested behavior
+
+- Large homogeneous `items` arrays are virtualized when enabled and above the threshold.
+- Tuple arrays using `prefixItems` remain on the normal rendering path.
+- Arrays below the threshold remain on the normal rendering path.
+- Nested arrays remain normal by default to avoid stacked scroll containers.
+- A nested array can be explicitly selected with a matching `paths` wildcard rule.
+- Rows can contain deeply nested objects and arrays; measured row heights account for variable nested content.
+
+### Accessibility and mobile behavior
+
+Virtualized collections expose list semantics, total item counts, and item positions through `aria-setsize` and `aria-posinset`. Focused rows are revealed, validation errors scroll to their first invalid item, and add/remove operations preserve focus and announce changes through a localized live region.
+
+On mobile, collections use touch scrolling and a responsive viewport. A mobile-only expand/collapse control can open the collection as a full-screen editing surface. Avoid configuring independent nested scroll regions unless the nested path is intentionally selected.
+
+### Benchmarking
+
+The repository includes a browser benchmark at `playground/benchmark.html`. Run the Playground and open `/benchmark.html` to compare eager arrays, virtualized arrays, and progressive large objects. It reports mounted nodes, React commit duration, commit count, and an end-to-end sample. Use a production preview and browser performance traces for release-quality measurements; the displayed values are comparison data, not universal thresholds.
 
 #### `peerSchemas?: JSONSchema[] | Record<string, JSONSchema>`
 
@@ -517,6 +619,10 @@ function RefAwareForm() {
 type SchemaFormValidationError = {
   message: string;
   source: "schema" | "peerSchemas" | "ref-resolution" | "data";
+  keyword?: string;
+  instancePath?: string;
+  schemaPath?: string;
+  params?: Record<string, unknown>;
 };
 ```
 
@@ -532,12 +638,219 @@ type SchemaBuilderValidationError = {
 };
 ```
 
+## Localization
+
+FormHell includes localization support without depending on a localization library. Its built-in English messages preserve the default behavior, while `FormHellLocaleProvider` lets an application provide partial message overrides or delegate translation to an existing React i18n system.
+
+FormHell does not read cookies, browser storage, or navigator language automatically. The host application remains responsible for choosing the active locale, which avoids conflicting locale sources and works with SSR, React Server Components, and existing routing strategies.
+
+### Without an external localization library
+
+Use `messages` for a small application, a prototype, or overrides that only cover a few strings. Unspecified messages fall back to the built-in English defaults:
+
+```tsx
+import { FormHellLocaleProvider, SchemaForm } from "formhell";
+import "formhell/styles.css";
+
+const frenchMessages = {
+  field: {
+    optional: "Facultatif"
+  },
+  array: {
+    addItem: "Ajouter un élément",
+    remove: "Supprimer",
+    itemLabel: "Élément {index}"
+  },
+  boolean: {
+    trueLabel: "Oui",
+    falseLabel: "Non"
+  },
+  select: {
+    placeholder: "Sélectionner..."
+  }
+};
+
+<FormHellLocaleProvider locale="fr-FR" messages={frenchMessages}>
+  <SchemaForm schema={schema} />
+</FormHellLocaleProvider>;
+```
+
+Message values support `{name}`-style interpolation. The default catalog includes library-owned chrome such as optional markers, array actions, boolean labels, select placeholders, null descriptions, loading messages, and generated item labels.
+
+### Using an existing React localization library
+
+For applications already using a localization framework, pass its translator through `translate`. The adapter receives a stable FormHell key, interpolation values, and the English default message. Return `undefined` to fall through to the `messages` override or built-in English default.
+
+#### react-i18next
+
+```tsx
+import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
+import { FormHellLocaleProvider } from "formhell";
+
+function FormHellI18n({ children }: { children: ReactNode }) {
+  const { t, i18n } = useTranslation("formhell");
+
+  return (
+    <FormHellLocaleProvider
+      locale={i18n.language}
+      translate={(key, values, defaultMessage) =>
+        t(key, { ...values, defaultValue: defaultMessage })
+      }
+    >
+      {children}
+    </FormHellLocaleProvider>
+  );
+}
+```
+
+The host i18next resource can use keys such as `array.addItem`, `array.remove`, `field.optional`, and `select.placeholder`.
+
+#### FormatJS / react-intl
+
+```tsx
+import type { ReactNode } from "react";
+import { useIntl } from "react-intl";
+import { FormHellLocaleProvider } from "formhell";
+
+function FormHellIntl({ children }: { children: ReactNode }) {
+  const intl = useIntl();
+
+  return (
+    <FormHellLocaleProvider
+      locale={intl.locale}
+      translate={(key, values, defaultMessage) =>
+        intl.formatMessage(
+          { id: `formhell.${key}`, defaultMessage },
+          values
+        )
+      }
+    >
+      {children}
+    </FormHellLocaleProvider>
+  );
+}
+```
+
+Passing `defaultMessage` gives FormatJS a fallback for missing translations. The values object is compatible with ICU interpolation for the built-in indexed labels.
+
+#### Paraglide
+
+Paraglide generates typed message functions rather than encouraging arbitrary runtime key lookup. Create a small adapter map for the FormHell keys your application translates:
+
+```tsx
+import type { ReactNode } from "react";
+import { getLocale } from "./paraglide/runtime";
+import * as m from "./paraglide/messages";
+import { FormHellLocaleProvider } from "formhell";
+
+const formhellMessages: Record<string, (values?: Record<string, string | number>) => string> = {
+  "field.optional": m.formhell_field_optional,
+  "array.addItem": m.formhell_array_addItem,
+  "array.remove": m.formhell_array_remove,
+  "array.itemLabel": m.formhell_array_itemLabel,
+  "select.placeholder": m.formhell_select_placeholder
+};
+
+function FormHellParaglide({ children }: { children: ReactNode }) {
+  return (
+    <FormHellLocaleProvider
+      locale={getLocale()}
+      translate={(key, values) => formhellMessages[key]?.(values)}
+    >
+      {children}
+    </FormHellLocaleProvider>
+  );
+}
+```
+
+Paraglide locale changes must cause the React tree to render again so the provider receives the new `locale` value.
+
+### Localization boundaries
+
+FormHell distinguishes library-owned UI strings from schema-owned content:
+
+- **Library chrome** is handled by `FormHellLocaleProvider`: buttons, optional markers, generated item labels, status text, and accessibility labels.
+- **Schema-derived labels** come from `schema.title`, or the property name when no title exists. Applications should localize schema titles through their existing translation layer before passing the schema, or add a label-resolution layer around their schema data.
+- **Enum display values** are rendered from the schema's enum values. Use `oneOf` entries with `const` and localized `title` annotations when a value needs a translated display label.
+- **Validation errors** include both a readable `message` and structured `keyword`, `instancePath`, `schemaPath`, and `params` fields. Use those structured fields to produce localized validation text in the host application or integrate an AJV localization package.
+
+### Locale and right-to-left text
+
+`locale` is also used to derive text direction. Arabic, Hebrew, Persian, Urdu, and other known right-to-left locales cause the SchemaForm root to receive `dir="rtl"`. Override this explicitly when your application needs different behavior:
+
+```tsx
+<FormHellLocaleProvider locale="ar-EG" direction="rtl">
+  <SchemaForm schema={schema} />
+</FormHellLocaleProvider>
+```
+
+FormHell intentionally does not automatically detect locale from cookies. Pass the locale resolved by your router, i18next detector, Paraglide runtime, FormatJS provider, or server request so the server and client render the same language.
+
+## Theming
+
+FormHell does not depend on Material UI or any other styling framework. Importing `formhell/styles.css` gives the components a complete default theme, so the library works without a provider or theme package.
+
+The components are also designed to participate in a host application's theme. Their styles use CSS custom properties with fallbacks, which means an application can override the FormHell variables at any scope that contains a `SchemaForm`, `SchemaBuilder`, or `SchemaBuilderHelper`:
+
+```css
+.checkout-form {
+  --raf-color-border: #6b7280;
+  --raf-color-border-focus: #0f766e;
+  --raf-color-label: #102a43;
+  --raf-color-muted: #52657a;
+  --raf-color-surface: #ffffff;
+  --raf-color-surface-alt: #f3f6fb;
+  --raf-color-danger: #b42318;
+}
+```
+
+### Optional Material UI integration
+
+When a Material UI theme is present, FormHell automatically consumes MUI's generated CSS variables. Create the theme with `cssVariables: true` and place the FormHell components inside the `ThemeProvider`:
+
+```tsx
+import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { SchemaForm } from "formhell";
+import "formhell/styles.css";
+
+const theme = createTheme({
+  cssVariables: true,
+  palette: {
+    primary: { main: "#1976d2" },
+    secondary: { main: "#526d82" },
+    error: { main: "#b42318" },
+    background: { default: "#f3f6fb", paper: "#ffffff" },
+    text: { primary: "#172b4d", secondary: "#52657a" }
+  }
+});
+
+<ThemeProvider theme={theme}>
+  <CssBaseline />
+  <SchemaForm schema={schema} />
+</ThemeProvider>;
+```
+
+FormHell maps the available MUI variables to its component roles:
+
+- `background.paper` controls form inputs, builder controls, modals, and helper surfaces.
+- `background.default` controls nested objects, builder sections, typeahead menus, and previews.
+- `text.primary` controls labels, headings, input text, and body content.
+- `text.secondary` controls optional labels, summaries, muted copy, and empty states.
+- `divider` controls borders.
+- `primary.main` controls primary actions, focus rings, selected type buttons, and links.
+- `secondary.main` controls secondary actions such as Add Type, info buttons, and tooltip Close buttons.
+- `error.main` controls danger actions, validation errors, and error states.
+
+MUI is intentionally not listed as a FormHell dependency. Applications that use another theme system can provide the same CSS custom properties, and applications without a theme continue using FormHell's built-in fallbacks.
+
 ## Scripts
 
 - `npm run build` build library output to `dist`.
 - `npm run typecheck` run TypeScript checks.
-- `npm run playground:dev` run the local playground app.
-- `npm run playground:build` build the playground app.
+- `npm run playground:dev` run the local interactive playground app.
+- `npm run docs:dev` run the local documentation site.
+- `npm run playground:build` build the playground app (includes the docs site and benchmark page).
 - `npm run playground:preview` preview built playground output.
 
 ## Local Playground

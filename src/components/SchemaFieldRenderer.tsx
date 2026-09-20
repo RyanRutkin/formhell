@@ -7,10 +7,19 @@ import { SchemaFormNumber } from "./fields/SchemaFormNumber";
 import { SchemaFormObject } from "./fields/SchemaFormObject";
 import { SchemaFormSelect } from "./fields/SchemaFormSelect";
 import { SchemaFormString } from "./fields/SchemaFormString";
-import type { FieldComponentProps, SchemaFormArrayProps, SchemaFormObjectProps, SchemaFormWidgets } from "../types/components";
+import type {
+  FieldComponentProps,
+  SchemaFormArrayProps,
+  SchemaFormObjectProps,
+  SchemaFormValidationError,
+  SchemaFormVirtualizationOptions,
+  SchemaFormWidgets
+} from "../types/components";
 import type { JSONSchema, JSONSchemaType } from "../types/schema";
+import { useFormHellLocale } from "../i18n/LocaleProvider";
 import { createDefaultValueFromSchema } from "../utils/defaultData";
 import { joinPointer } from "../utils/jsonPointer";
+import { resolveArrayVirtualizationOptions } from "../utils/virtualization";
 
 interface SchemaFieldRendererProps {
   schema: JSONSchema;
@@ -21,11 +30,29 @@ interface SchemaFieldRendererProps {
   value: unknown;
   onChange: (pointer: string, next: unknown) => void;
   widgets?: SchemaFormWidgets;
+  virtualization?: SchemaFormVirtualizationOptions;
+  virtualizationDepth?: number;
+  validationErrors?: SchemaFormValidationError[];
   controls?: ReactNode;
 }
 
 export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
-  const { schema, label, required, pointer, schemaPointer, value, onChange, widgets, controls } = props;
+  const {
+    schema,
+    label,
+    required,
+    pointer,
+    schemaPointer,
+    value,
+    onChange,
+    widgets,
+    virtualization,
+    virtualizationDepth = 0,
+    validationErrors,
+    controls
+  } = props;
+  const { formatMessage } = useFormHellLocale();
+  const [isObjectExpanded, setIsObjectExpanded] = useState(false);
   const hasConstValue = Object.prototype.hasOwnProperty.call(schema, "const");
   const lockedValue = hasConstValue ? schema.const : value;
   const isConstLocked = hasConstValue;
@@ -64,7 +91,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
   }, [inferredType, schemaTypes, selectedType]);
 
   const typeChooser = hasTypeChoices && !hasEnum ? (
-    <div className="raf-button-row" aria-label={`${label} type chooser`}>
+    <div className="raf-button-row" aria-label={formatMessage("field.typeChooser", { label })}>
       {schemaTypes
         .filter((choice) => choice !== "null")
         .map((choice) => (
@@ -94,7 +121,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
             onChange(pointer, null);
           }}
         >
-          Insert NULL
+          {formatMessage("field.insertNull")}
         </button>
       ) : null}
     </div>
@@ -107,6 +134,20 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
     const objectValue = isObject(lockedValue) ? lockedValue : {};
     const requiredKeys = new Set(schema.required ?? []);
     const properties = schema.properties ?? {};
+    const propertyEntries = Object.entries(properties);
+    const requiredEntries = propertyEntries.filter(([propertyName]) => requiredKeys.has(propertyName));
+    const optionalEntries = propertyEntries.filter(([propertyName]) => !requiredKeys.has(propertyName));
+    const progressiveObjects =
+      virtualization?.enabled === true &&
+      virtualization.objects?.enabled === true &&
+      virtualizationDepth === 0 &&
+      propertyEntries.length >= (virtualization.objects.threshold ?? 100);
+    const visibleOptionalCount = progressiveObjects
+      ? Math.min(optionalEntries.length, Math.max(1, Math.floor(virtualization.objects?.initialVisibleProperties ?? 25)))
+      : optionalEntries.length;
+    const visibleEntries = progressiveObjects && !isObjectExpanded
+      ? [...requiredEntries, ...optionalEntries.slice(0, visibleOptionalCount)]
+      : propertyEntries;
 
     return (
       <ObjectWidget
@@ -124,7 +165,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
           onChange(pointer, next);
         }}
       >
-        {Object.entries(properties).map(([propertyName, propertySchema]) => {
+        {visibleEntries.map(([propertyName, propertySchema]) => {
           const childPointer = joinPointer(pointer, propertyName);
           const childSchemaPointer = joinPointer(joinPointer(schemaPointer, "properties"), propertyName);
           const childValue = objectValue[propertyName];
@@ -140,9 +181,25 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
               value={childValue}
               onChange={onChange}
               widgets={widgets}
+              virtualization={virtualization}
+              virtualizationDepth={virtualizationDepth}
+              validationErrors={validationErrors}
             />
           );
         })}
+        {progressiveObjects && (isObjectExpanded || optionalEntries.length > visibleOptionalCount) ? (
+          <div className="raf-button-row">
+            <button
+              className="raf-button raf-button-secondary"
+              type="button"
+              onClick={() => setIsObjectExpanded((current) => !current)}
+            >
+              {isObjectExpanded
+                ? formatMessage("object.showLess")
+                : formatMessage("object.showMore", { count: optionalEntries.length - visibleOptionalCount })}
+            </button>
+          </div>
+        ) : null}
       </ObjectWidget>
     );
   }
@@ -158,6 +215,13 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
         )
       : arrayValue;
     const canAddItem = tupleItems ? false : arrayValue.length < addLimit;
+    const virtualizationOptions = resolveArrayVirtualizationOptions(
+      virtualization,
+      arrayValue.length,
+      virtualizationDepth,
+      Boolean(tupleItems),
+      pointer
+    );
 
     return (
       <ArrayWidget
@@ -177,20 +241,42 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
         itemsSchema={singleItemsSchema}
         itemSchemas={itemSchemas}
         createDefaultItem={() => createDefaultValueForArrayItem(itemSchemas, arrayValue.length)}
+        getItemKey={(item, index) =>
+          virtualizationOptions?.itemKey
+            ? String(
+                virtualizationOptions.itemKey({
+                  value: item,
+                  index,
+                  pointer: joinPointer(pointer, String(index)),
+                  schema: tupleItems?.[index] ?? singleItemsSchema ?? { type: "string" }
+                })
+              )
+            : `${pointer}/${index}`
+        }
+        preferItemKeys={Boolean(virtualizationOptions?.itemKey)}
         renderItem={(index, itemPointer, itemValue) => (
           <SchemaFieldRenderer
             schema={tupleItems?.[index] ?? singleItemsSchema ?? { type: "string" }}
-            label={tupleItems?.[index]?.title?.trim() ? (tupleItems[index].title as string) : tupleItems ? `Tuple ${index + 1}` : `Item ${index + 1}`}
+            label={
+              tupleItems?.[index]?.title?.trim()
+                ? (tupleItems[index].title as string)
+                : formatMessage(tupleItems ? "array.tupleLabel" : "array.itemLabel", { index: index + 1 })
+            }
             required={true}
             pointer={itemPointer}
             schemaPointer={tupleItems ? joinPointer(joinPointer(schemaPointer, "prefixItems"), String(index)) : joinPointer(schemaPointer, "items")}
             value={itemValue}
             onChange={onChange}
             widgets={widgets}
+            virtualization={virtualization}
+            virtualizationDepth={virtualizationDepth + 1}
+            validationErrors={validationErrors}
           />
         )}
         canAddItem={canAddItem}
         canRemoveItems={!tupleItems}
+        virtualization={virtualizationOptions}
+        validationErrors={validationErrors}
       />
     );
   }

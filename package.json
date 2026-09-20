@@ -1,7 +1,7 @@
 {
   "name": "formhell",
   "author": "Ryan Rutkin",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "React JSON Schema form and schema builder library with draft 2020-12 support, robust $ref resolution, and strong defaults handling",
   "license": "MIT",
   "main": "dist/index.cjs",
@@ -53,6 +53,7 @@
     "playground:dev": "npm --prefix playground run dev",
     "playground:build": "npm --prefix playground run build",
     "playground:preview": "npm --prefix playground run preview",
+    "docs:dev": "npm --prefix playground run dev:docs",
     "prepublishOnly": "npm run build",
     "publish:npm": "npm publish --access public"
   },

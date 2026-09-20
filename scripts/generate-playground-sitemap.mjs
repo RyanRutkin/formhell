@@ -66,7 +66,7 @@ async function main() {
   await fs.mkdir(publicDir, { recursive: true });
 
   const routesFromPublic = await collectHtmlRoutes(publicDir);
-  const uniqueRoutes = Array.from(new Set(["/", ...routesFromPublic])).sort((a, b) => {
+  const uniqueRoutes = Array.from(new Set(["/", "/playground", ...routesFromPublic])).sort((a, b) => {
     if (a === "/") return -1;
     if (b === "/") return 1;
     return a.localeCompare(b);
