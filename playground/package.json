@@ -9,6 +9,7 @@
     "check:imports": "vite build --logLevel error --emptyOutDir false",
     "preview": "vite preview",
     "test": "vitest run"
+    ,"benchmark:virtualization": "vitest run src/virtualization.baseline.test.tsx --reporter=verbose"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

@@ -1,0 +1,91 @@
+body {
+  margin: 0;
+  background: #0d0909;
+  color: #f6ead8;
+  font-family: "Segoe UI", "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.benchmark-page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.benchmark-page header {
+  margin-bottom: 1.5rem;
+}
+
+.benchmark-page h1,
+.benchmark-page h2 {
+  margin-top: 0;
+}
+
+.benchmark-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.benchmark-controls button {
+  border: 1px solid #e24d35;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background: #3d2422;
+  color: #f6ead8;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.benchmark-controls button:hover:not(:disabled),
+.benchmark-controls button:focus-visible {
+  background: #e24d35;
+  color: #ffffff;
+}
+
+.benchmark-controls button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.benchmark-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.benchmark-results article {
+  border: 1px solid #68433c;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  background: #2d1c1a;
+}
+
+.benchmark-results dl {
+  display: grid;
+  gap: 0.625rem;
+  margin: 0;
+}
+
+.benchmark-results dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.benchmark-results dt {
+  color: #cdbeb2;
+}
+
+.benchmark-results dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.benchmark-mount {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  pointer-events: none;
+}

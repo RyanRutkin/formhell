@@ -133,6 +133,64 @@
   margin-bottom: 0.625rem;
 }
 
+.raf-virtualized-collection {
+  max-width: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.raf-virtualized-collection-shell {
+  position: relative;
+}
+
+.raf-virtualized-collection-expand {
+  display: none;
+}
+
+.raf-virtualized-collection-count {
+  display: block;
+  margin-bottom: 0.375rem;
+  color: var(--raf-color-muted, var(--mui-palette-text-secondary, #667085));
+  font-size: 0.8rem;
+}
+
+.raf-virtualized-collection-content {
+  position: relative;
+  width: 100%;
+}
+
+.raf-virtualized-collection-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+@media (max-width: 40rem) {
+  .raf-virtualized-collection-expand {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .raf-virtualized-collection {
+    max-height: 70vh;
+  }
+
+  .raf-virtualized-collection-shell-expanded {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    padding: 1rem;
+    background: var(--mui-palette-background-paper, var(--raf-color-surface, #ffffff));
+  }
+
+  .raf-virtualized-collection-shell-expanded .raf-virtualized-collection {
+    height: calc(100vh - 4rem) !important;
+    max-height: none;
+  }
+}
+
 .raf-button {
   border: 0;
   border-radius: 0.5rem;

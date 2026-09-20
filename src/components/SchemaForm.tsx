@@ -14,6 +14,7 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
   const [resolvedSchema, setResolvedSchema] = useState<JSONSchema | null>(null);
   const [resolutionError, setResolutionError] = useState<Error | null>(null);
   const [isWaitingForPeerSchemas, setIsWaitingForPeerSchemas] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<SchemaFormValidationError[]>([]);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -93,6 +94,7 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
 
     setFormData(initialData);
     const validationErrors = getDataValidationErrors(initialData, resolvedSchema);
+    setValidationErrors(validationErrors);
     onChangeRef.current?.(initialData, validationErrors, "", undefined, initialData);
   }, [initialData, resolvedSchema]);
 
@@ -106,6 +108,7 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
     const validationErrors = getDataValidationErrors(updated, resolvedSchema);
 
     setFormData(updated);
+    setValidationErrors(validationErrors);
     onChangeRef.current?.(updated, validationErrors, pointer, previousValue, next);
   };
 
@@ -137,6 +140,8 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
         value={formData}
         onChange={handleFieldChange}
         widgets={widgets}
+        virtualization={options?.virtualization}
+        validationErrors={validationErrors}
       />
     </div>
   );

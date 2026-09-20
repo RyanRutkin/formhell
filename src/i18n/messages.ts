@@ -17,6 +17,11 @@ export interface FormHellMessages {
     remove: string;
     itemLabel: string;
     tupleLabel: string;
+    itemAdded: string;
+    itemRemoved: string;
+    itemCount: string;
+    expand: string;
+    collapse: string;
   };
   boolean: {
     trueLabel: string;
@@ -27,6 +32,10 @@ export interface FormHellMessages {
   };
   nullField: {
     description: string;
+  };
+  object: {
+    showMore: string;
+    showLess: string;
   };
 }
 
@@ -48,7 +57,12 @@ export const defaultMessages: FormHellMessages = {
     addItem: "Add Item",
     remove: "Remove",
     itemLabel: "Item {index}",
-    tupleLabel: "Tuple {index}"
+    tupleLabel: "Tuple {index}",
+    itemAdded: "Item {index} added",
+    itemRemoved: "Item {index} removed",
+    itemCount: "{count} items",
+    expand: "Expand collection",
+    collapse: "Collapse collection"
   },
   boolean: {
     trueLabel: "True",
@@ -59,5 +73,9 @@ export const defaultMessages: FormHellMessages = {
   },
   nullField: {
     description: "Value is always null."
+  },
+  object: {
+    showMore: "Show {count} more properties",
+    showLess: "Show fewer properties"
   }
 };

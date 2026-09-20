@@ -123,6 +123,167 @@ Choose how aggressively defaults are generated.
 />
 ```
 
+#### `options.virtualization?: SchemaFormVirtualizationOptions`
+
+Virtualization is opt-in and is disabled by default. When enabled, FormHell virtualizes large homogeneous arrays while preserving the normal renderer for small arrays, tuple arrays, and nested arrays. The core package does not depend on TanStack.
+
+```tsx
+<SchemaForm
+  schema={schema}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: {
+        enabled: true,
+        threshold: 100,
+        height: "min(70vh, 36rem)",
+        estimateItemHeight: 160,
+        overscan: 4
+      }
+    }
+  }}
+/>;
+```
+
+Virtualization options:
+
+- `enabled`: Enables the built-in dependency-free virtualizer. Defaults to `false`.
+- `arrays.enabled`: Enables or disables array virtualization independently. Defaults to enabled when `virtualization.enabled` is `true`.
+- `arrays.threshold`: Minimum item count before virtualization activates. Smaller arrays use normal rendering. The default is `100`.
+- `arrays.height`: CSS height or positive pixel height for the collection viewport. The default is `"min(70vh, 36rem)"`. A bounded viewport is required so the virtualizer can calculate visible rows.
+- `arrays.estimateItemHeight`: Initial row-height estimate in pixels. It affects the initial scrollbar size before mounted rows are measured. The default is `160`.
+- `arrays.overscan`: Number of extra rows mounted before and after the visible range. Higher values improve fast-scroll continuity but increase rendering work. The default is `4`.
+- `arrays.itemKey`: Optional resolver for domain-level row identity, such as an API object's `id`. JSON Pointer paths remain index-based for data semantics.
+- `arrays.virtualizer`: Optional `FormHellVirtualizerFactory` implementation. The built-in virtualizer remains the default.
+- `objects.enabled`: Enables progressive disclosure for large top-level objects. This does not virtualize object properties.
+- `objects.threshold`: Minimum property count before progressive disclosure activates. The default is `100`.
+- `objects.initialVisibleProperties`: Number of optional properties shown initially. Required properties remain visible. The default is `25`.
+
+### Path-specific array configuration
+
+For applications with collections of very different sizes, override global array settings by exact JSON Pointer or wildcard path:
+
+```tsx
+<SchemaForm
+  schema={schema}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: { threshold: 100 },
+      paths: {
+        "/orders": {
+          threshold: 50,
+          height: "70vh"
+        },
+        "/orders/*/lineItems": {
+          threshold: 200,
+          height: "60vh"
+        },
+        "/metadata/history": {
+          enabled: false
+        }
+      }
+    }
+  }}
+/>
+```
+
+Path precedence is exact path, wildcard path, global array settings, then normal rendering. Nested arrays are only virtualized when explicitly selected by a matching path rule.
+
+### Custom virtualizer adapters
+
+The public adapter contract is dependency-free and does not expose TanStack types. A custom implementation can be supplied when the built-in renderer should use another range/measurement engine:
+
+```tsx
+import type { FormHellVirtualizerFactory } from "formhell";
+
+const virtualizer: FormHellVirtualizerFactory = {
+  create: ({ count, estimateSize, overscan, getItemKey }) => {
+    // Connect these inputs to your virtualization engine.
+    return {
+      getRange: (scrollOffset, viewportSize) => ({
+        startIndex: 0,
+        endIndex: Math.min(count - 1, 10),
+        totalSize: count * estimateSize,
+        getItemOffset: (index) => index * estimateSize
+      }),
+      measure: (index, size) => {},
+      scrollToIndex: (index) => index * estimateSize,
+      dispose: () => {}
+    };
+  }
+};
+
+<SchemaForm
+  schema={schema}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: { threshold: 100, overscan: 4, virtualizer }
+    }
+  }}
+/>
+```
+
+The factory is created independently for each collection. `getItemKey` receives the configured row identity for each index. The core package remains free of TanStack dependencies; a future `formhell-virtualization-tanstack` package can implement this contract, and a later full-renderer plugin can replace collection rendering entirely.
+
+The built-in implementation measures mounted rows and supports variable-height nested object content. Nested arrays are not automatically virtualized, so a deeply nested schema does not create a stack of nested scroll areas. This keeps mobile interaction manageable. On mobile, use a responsive height such as `min(70vh, 36rem)` and consider providing a larger/full-screen collection experience at the application level.
+
+Invalid numeric values are normalized to safe defaults. Tuple arrays (`prefixItems`) and arrays below the threshold remain on the normal rendering path.
+
+When `itemKey` is not provided, FormHell maintains internal row identity without adding metadata to your data. JSON Pointer paths still use array indexes, while React/virtualizer identity is tracked separately. Provide `itemKey` when your data has a stable domain identifier and items can be reordered.
+
+For reorderable arrays, or arrays containing duplicate objects, the recommended approach is to provide a stable domain key. Structural fallback identity cannot distinguish identical duplicate values reliably after insertion, removal, or reordering, which can affect React row continuity, focus, or measurement-cache reuse. The fallback does not corrupt JSON Pointer data, but domain identity gives the strongest behavior:
+
+```tsx
+<SchemaForm
+  schema={schema}
+  data={data}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: {
+        threshold: 100,
+        itemKey: ({ value, pointer }) =>
+          typeof value === "object" &&
+          value !== null &&
+          "id" in value &&
+          (typeof value.id === "string" || typeof value.id === "number")
+            ? String(value.id)
+            : pointer
+      }
+    }
+  }}
+  onChange={(nextData, validationErrors, fieldPointer, previousValue, nextValue) => {
+    // Sync nextData with application state and handle validationErrors.
+    console.log({ nextData, validationErrors, fieldPointer, previousValue, nextValue });
+  }}
+/>;
+```
+
+The resolver must return a unique, stable value for each sibling item. Do not generate a random UUID during render; that changes the React key on every render and causes rows to remount. Do not add an internal identity property to the JSON data.
+
+The virtualizer factory is a public FormHell-owned contract. TanStack types are intentionally excluded from it so external adapters can be versioned independently. The future TanStack package will be optional and will not be added to the core `formhell` dependency graph.
+
+### Supported shapes and nested behavior
+
+- Large homogeneous `items` arrays are virtualized when enabled and above the threshold.
+- Tuple arrays using `prefixItems` remain on the normal rendering path.
+- Arrays below the threshold remain on the normal rendering path.
+- Nested arrays remain normal by default to avoid stacked scroll containers.
+- A nested array can be explicitly selected with a matching `paths` wildcard rule.
+- Rows can contain deeply nested objects and arrays; measured row heights account for variable nested content.
+
+### Accessibility and mobile behavior
+
+Virtualized collections expose list semantics, total item counts, and item positions through `aria-setsize` and `aria-posinset`. Focused rows are revealed, validation errors scroll to their first invalid item, and add/remove operations preserve focus and announce changes through a localized live region.
+
+On mobile, collections use touch scrolling and a responsive viewport. A mobile-only expand/collapse control can open the collection as a full-screen editing surface. Avoid configuring independent nested scroll regions unless the nested path is intentionally selected.
+
+### Benchmarking
+
+The repository includes a browser benchmark at `playground/benchmark.html`. Run the Playground and open `/benchmark.html` to compare eager arrays, virtualized arrays, and progressive large objects. It reports mounted nodes, React commit duration, commit count, and an end-to-end sample. Use a production preview and browser performance traces for release-quality measurements; the displayed values are comparison data, not universal thresholds.
+
 #### `peerSchemas?: JSONSchema[] | Record<string, JSONSchema>`
 
 Provide external schema documents for `$ref` resolution.
@@ -460,6 +621,10 @@ function RefAwareForm() {
 type SchemaFormValidationError = {
   message: string;
   source: "schema" | "peerSchemas" | "ref-resolution" | "data";
+  keyword?: string;
+  instancePath?: string;
+  schemaPath?: string;
+  params?: Record<string, unknown>;
 };
 ```
 
