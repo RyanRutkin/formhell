@@ -7,12 +7,16 @@ export function useStableItemKeys<TItem>(
   preferProvidedKeys = false
 ): Key[] {
   const identityTokensRef = useRef(new Map<string, string>());
+  const fingerprintCacheRef = useRef(new WeakMap<object, string>());
   const nextIdentityRef = useRef(0);
   const occurrenceCounts = new Map<string, number>();
+  const nextIdentityTokens = new Map<string, string>();
 
-  return items.map((item, index) => {
+  const keys = items.map((item, index) => {
     const providedKey = fallbackKey(item, index);
-    const fingerprint = preferProvidedKeys ? `provided:${String(providedKey)}` : createItemFingerprint(item, providedKey);
+    const fingerprint = preferProvidedKeys
+      ? `provided:${String(providedKey)}`
+      : createItemFingerprint(item, providedKey, fingerprintCacheRef.current);
     const occurrence = occurrenceCounts.get(fingerprint) ?? 0;
     occurrenceCounts.set(fingerprint, occurrence + 1);
     const identityKey = `${fingerprint}::${occurrence}`;
@@ -23,11 +27,30 @@ export function useStableItemKeys<TItem>(
       identityTokensRef.current.set(identityKey, token);
     }
 
+    nextIdentityTokens.set(identityKey, token);
     return token;
   });
+
+  identityTokensRef.current = nextIdentityTokens;
+  return keys;
 }
 
-function createItemFingerprint<TItem>(item: TItem, fallbackKey: Key): string {
+function createItemFingerprint<TItem>(item: TItem, fallbackKey: Key, cache: WeakMap<object, string>): string {
+  if (typeof item === "object" && item !== null) {
+    const cached = cache.get(item);
+    if (cached) {
+      return cached;
+    }
+
+    const fingerprint = serializeItemFingerprint(item, fallbackKey);
+    cache.set(item, fingerprint);
+    return fingerprint;
+  }
+
+  return serializeItemFingerprint(item, fallbackKey);
+}
+
+function serializeItemFingerprint<TItem>(item: TItem, fallbackKey: Key): string {
   try {
     return `value:${JSON.stringify(item)}`;
   } catch {

@@ -141,6 +141,10 @@ JSON Pointer paths remain index-based because they identify locations in the use
 
 React and virtualizer identity is separate. FormHell maintains internal structural identity tokens without mutating user data or adding properties such as `__formhellId`.
 
+Fallback fingerprinting caches serialization for unchanged object references and prunes identities that are no longer present in the current collection. This limits repeated serialization and prevents historical edits from creating unbounded identity-map memory.
+
+An explicit consumer `itemKey` resolver remains a future API refinement for domain-level identity such as an `id` field.
+
 Applications with stable domain identifiers can provide an item-key resolver:
 
 ```tsx
