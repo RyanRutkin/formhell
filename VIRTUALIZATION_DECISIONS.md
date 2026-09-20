@@ -196,6 +196,13 @@ export interface FormHellVirtualizer {
 
 Each collection receives its own factory-created virtualizer instance. The contract covers variable-height measurement, range calculation, scroll-to-index, and lifecycle cleanup while leaving implementation choice open.
 
+Lifecycle guarantees:
+
+- A factory-created virtualizer instance is preserved across unrelated form rerenders.
+- The adapter receives stable item-key access without callback identity changes recreating the instance.
+- Range-change notifications are applied after render; adapters must not cause React state updates during `getRange` execution.
+- Adapter disposal runs when the collection unmounts or its configuration is replaced.
+
 ## Accessibility and Mobile Behavior
 
 Virtualized collections expose:

@@ -284,11 +284,13 @@ describe("Built-in array virtualization", () => {
 
   it("passes configured item keys to a custom virtualizer factory", async () => {
     const seenKeys: string[] = [];
+    let createCount = 0;
     const factory: FormHellVirtualizerFactory = {
       create: ({ count, getItemKey }) => {
+        createCount += 1;
         seenKeys.push(getItemKey(0));
         return {
-          getRange: () => ({
+          getRange: (_scrollOffset, _viewportSize) => ({
             startIndex: 0,
             endIndex: Math.min(1, count - 1),
             totalSize: count * 160,
@@ -331,5 +333,47 @@ describe("Built-in array virtualization", () => {
       expect(container.querySelectorAll(".raf-virtualized-collection").length).toBe(1);
     });
     expect(seenKeys).toContain("record-0");
+
+    const firstInput = container.querySelector<HTMLInputElement>(".raf-virtualized-collection-item .raf-input");
+    expect(firstInput).not.toBeNull();
+    await userEvent.setup().type(firstInput as HTMLInputElement, " updated");
+    expect(createCount).toBe(1);
+  });
+
+  it("defers custom range-change notifications until after rendering", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const factory: FormHellVirtualizerFactory = {
+        create: ({ count, onRangeChange }) => ({
+          getRange: () => {
+            const range = {
+              startIndex: 0,
+              endIndex: Math.min(1, count - 1),
+              totalSize: count * 160,
+              getItemOffset: (index: number) => index * 160
+            };
+            onRangeChange?.(range);
+            return range;
+          },
+          measure: () => undefined,
+          dispose: () => undefined
+        })
+      };
+
+      render(
+        <SchemaForm
+          schema={schema}
+          data={data}
+          options={{ virtualization: { enabled: true, arrays: { threshold: 100, virtualizer: factory } } }}
+        />
+      );
+
+      await waitFor(() => {
+        expect(document.querySelectorAll(".raf-virtualized-collection-item").length).toBe(2);
+      });
+      expect(consoleErrorSpy).not.toHaveBeenCalledWith(expect.stringContaining("Maximum update depth"));
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 });

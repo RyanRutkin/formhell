@@ -136,7 +136,7 @@ function VirtualizedCollection<TItem>({
         onScroll={onScroll}
         onFocusCapture={(event) => {
           const item = (event.target as HTMLElement).closest<HTMLElement>("[data-virtualized-index]");
-          item?.scrollIntoView({ block: "nearest", inline: "nearest" });
+          item?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
         }}
       >
         <div className="raf-virtualized-collection-content" style={{ height: range.totalSize }}>
