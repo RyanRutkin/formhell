@@ -233,6 +233,36 @@ Invalid numeric values are normalized to safe defaults. Tuple arrays (`prefixIte
 
 When `itemKey` is not provided, FormHell maintains internal row identity without adding metadata to your data. JSON Pointer paths still use array indexes, while React/virtualizer identity is tracked separately. Provide `itemKey` when your data has a stable domain identifier and items can be reordered.
 
+For reorderable arrays, or arrays containing duplicate objects, the recommended approach is to provide a stable domain key. Structural fallback identity cannot distinguish identical duplicate values reliably after insertion, removal, or reordering, which can affect React row continuity, focus, or measurement-cache reuse. The fallback does not corrupt JSON Pointer data, but domain identity gives the strongest behavior:
+
+```tsx
+<SchemaForm
+  schema={schema}
+  data={data}
+  options={{
+    virtualization: {
+      enabled: true,
+      arrays: {
+        threshold: 100,
+        itemKey: ({ value, pointer }) =>
+          typeof value === "object" &&
+          value !== null &&
+          "id" in value &&
+          (typeof value.id === "string" || typeof value.id === "number")
+            ? String(value.id)
+            : pointer
+      }
+    }
+  }}
+  onChange={(nextData, validationErrors, fieldPointer, previousValue, nextValue) => {
+    // Sync nextData with application state and handle validationErrors.
+    console.log({ nextData, validationErrors, fieldPointer, previousValue, nextValue });
+  }}
+/>;
+```
+
+The resolver must return a unique, stable value for each sibling item. Do not generate a random UUID during render; that changes the React key on every render and causes rows to remount. Do not add an internal identity property to the JSON data.
+
 The virtualizer factory is a public FormHell-owned contract. TanStack types are intentionally excluded from it so external adapters can be versioned independently. The future TanStack package will be optional and will not be added to the core `formhell` dependency graph.
 
 ### Supported shapes and nested behavior
