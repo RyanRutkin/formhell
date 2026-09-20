@@ -376,4 +376,26 @@ describe("Built-in array virtualization", () => {
       consoleErrorSpy.mockRestore();
     }
   });
+
+  it("disposes a custom virtualizer when the form unmounts", async () => {
+    const dispose = vi.fn();
+    const factory: FormHellVirtualizerFactory = {
+      create: ({ count }) => ({
+        getRange: () => ({ startIndex: 0, endIndex: Math.min(1, count - 1), totalSize: count * 160, getItemOffset: (index) => index * 160 }),
+        measure: () => undefined,
+        dispose
+      })
+    };
+    const { unmount } = render(
+      <SchemaForm
+        schema={schema}
+        data={data}
+        options={{ virtualization: { enabled: true, arrays: { threshold: 100, virtualizer: factory } } }}
+      />
+    );
+
+    await waitFor(() => expect(dispose).not.toHaveBeenCalled());
+    unmount();
+    expect(dispose).toHaveBeenCalledTimes(1);
+  });
 });

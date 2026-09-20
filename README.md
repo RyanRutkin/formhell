@@ -621,6 +621,10 @@ function RefAwareForm() {
 type SchemaFormValidationError = {
   message: string;
   source: "schema" | "peerSchemas" | "ref-resolution" | "data";
+  keyword?: string;
+  instancePath?: string;
+  schemaPath?: string;
+  params?: Record<string, unknown>;
 };
 ```
 
