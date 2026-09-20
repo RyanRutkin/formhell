@@ -110,6 +110,7 @@ export function SchemaFormPage() {
         <li>Supports JSON Schema types: <code>string</code>, <code>number</code>, <code>integer</code>, <code>boolean</code>, <code>object</code>, <code>array</code>, <code>null</code>.</li>
         <li>Handles nested objects/arrays recursively.</li>
         <li>Validates schema and data continuously.</li>
+        <li>Displays validation messages beneath each field and as a summary below the form, both toggleable, with an optional message formatter.</li>
         <li>Resolves <code>$ref</code> references, including async peer schema fallback.</li>
         <li>Applies conditional and composition keywords against the current data (<code>if</code>/<code>then</code>/<code>else</code>, <code>allOf</code>, <code>anyOf</code>, <code>oneOf</code>, <code>dependentSchemas</code>, <code>dependentRequired</code>).</li>
         <li>Renders schema-described dynamic members (<code>patternProperties</code>, <code>additionalProperties</code>, <code>unevaluatedProperties</code>) with an add-property control.</li>
@@ -138,6 +139,23 @@ export function SchemaFormPage() {
           <strong><code>peerSchemas?: JSONSchema[] | Record&lt;string, JSONSchema&gt;</code></strong> &mdash; external
           schema documents available for <code>$ref</code> resolution, keyed by their own <code>$id</code> when passed as
           an array, or by an explicit key when passed as a record.
+        </li>
+        <li>
+          <strong><code>options?.showFieldValidationMessages: boolean</code></strong> &mdash; renders validation
+          messages directly beneath the field they relate to. Defaults to <code>true</code>.
+        </li>
+        <li>
+          <strong><code>options?.showFormValidationMessages: boolean</code></strong> &mdash; renders the aggregated
+          validation messages below the form, inside the <code>SchemaForm</code> wrapper. Defaults to
+          <code> true</code>.
+        </li>
+        <li>
+          <strong><code>options?.formatValidationMessage: (context) =&gt; string | null | undefined</code></strong>
+          &mdash; customizes the text of a validation message. It receives the <code>error</code>, the resolved
+          <code> schema</code> for the field, the <code>pointer</code>, the <code>previousValue</code> and the current
+          <code> value</code>. Returning an empty string, <code>null</code> or <code>undefined</code> suppresses the
+          message from both the field and the summary. It is called only for fields that actually have an error,
+          and the summary is the aggregate of its results.
         </li>
         <li>
           <strong><code>getSchema?: (requestedSchema: string) =&gt; Promise&lt;JSONSchema&gt;</code></strong> &mdash;

@@ -49,6 +49,9 @@ export interface FormHellMessages {
     branchLabelIndexed: string;
     branchOption: string;
   };
+  validation: {
+    summaryTitle: string;
+  };
 }
 
 export const defaultMessages: FormHellMessages = {
@@ -101,5 +104,8 @@ export const defaultMessages: FormHellMessages = {
     branchLabel: "Variant",
     branchLabelIndexed: "Variant {index}",
     branchOption: "Option {index}"
+  },
+  validation: {
+    summaryTitle: "Please correct the following:"
   }
 };
