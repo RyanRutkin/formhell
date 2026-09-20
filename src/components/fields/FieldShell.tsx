@@ -1,13 +1,15 @@
 import type { PropsWithChildren, ReactNode } from "react";
 import { useFormHellLocale } from "../../i18n/LocaleProvider";
+import { FieldValidationMessages } from "../FieldValidationMessages";
 
 interface FieldShellProps {
   label: string;
   required: boolean;
   controls?: ReactNode;
+  pointer?: string;
 }
 
-export function FieldShell({ label, required, controls, children }: PropsWithChildren<FieldShellProps>) {
+export function FieldShell({ label, required, controls, pointer, children }: PropsWithChildren<FieldShellProps>) {
   const { formatMessage } = useFormHellLocale();
 
   return (
@@ -21,6 +23,7 @@ export function FieldShell({ label, required, controls, children }: PropsWithChi
       </div>
       {controls ? <div className="raf-button-row">{controls}</div> : null}
       {children}
+      <FieldValidationMessages pointer={pointer} />
     </div>
   );
 }

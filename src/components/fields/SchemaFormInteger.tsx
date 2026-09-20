@@ -1,9 +1,9 @@
 import type { FieldComponentProps } from "../../types/components";
 import { FieldShell } from "./FieldShell";
 
-export function SchemaFormInteger({ label, required, value, disabled, controls, onChange }: FieldComponentProps<number | undefined>) {
+export function SchemaFormInteger({ label, required, value, disabled, controls, pointer, onChange }: FieldComponentProps<number | undefined>) {
   return (
-    <FieldShell label={label} required={required} controls={controls}>
+    <FieldShell label={label} required={required} controls={controls} pointer={pointer}>
       <input
         className="raf-input"
         type="number"

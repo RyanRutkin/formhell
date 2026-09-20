@@ -6,6 +6,8 @@ import { createDefaultValueFromSchema } from "../utils/defaultData";
 import { getValueAtPointer, setValueAtPointer } from "../utils/jsonPointer";
 import { MissingPeerSchemaError, resolveSchemaRefs } from "../utils/refResolver";
 import { collectDataValidationIssues, validatePeerSchemasOrThrow, validateSchemaOrThrow } from "../utils/schemaValidation";
+import { buildValidationMessages } from "../utils/validationMessages";
+import { FieldValidationMessagesProvider } from "./FieldValidationMessages";
 import { SchemaFieldRenderer } from "./SchemaFieldRenderer";
 
 export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, data, onChange }: SchemaFormProps) {
@@ -15,6 +17,10 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
   const [resolutionError, setResolutionError] = useState<Error | null>(null);
   const [isWaitingForPeerSchemas, setIsWaitingForPeerSchemas] = useState(false);
   const [validationErrors, setValidationErrors] = useState<SchemaFormValidationError[]>([]);
+  const previousValuesRef = useRef(new Map<string, unknown>());
+  const showFieldMessages = options?.showFieldValidationMessages !== false;
+  const showFormMessages = options?.showFormValidationMessages !== false;
+  const formatValidationMessage = options?.formatValidationMessage;
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -107,10 +113,23 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
     const updated = setValueAtPointer(formData, pointer, next) as OutputData;
     const validationErrors = getDataValidationErrors(updated, resolvedSchema);
 
+    previousValuesRef.current.set(pointer, previousValue);
     setFormData(updated);
     setValidationErrors(validationErrors);
     onChangeRef.current?.(updated, validationErrors, pointer, previousValue, next);
   };
+
+  const validationMessages = useMemo(
+    () =>
+      buildValidationMessages(
+        validationErrors,
+        resolvedSchema,
+        formData,
+        previousValuesRef.current,
+        formatValidationMessage
+      ),
+    [formData, formatValidationMessage, resolvedSchema, validationErrors]
+  );
 
   if (resolutionError) {
     throw resolutionError;
@@ -131,18 +150,33 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
 
   return (
     <div className="raf-schema-form" dir={direction === "rtl" ? "rtl" : undefined}>
-      <SchemaFieldRenderer
-        schema={resolvedSchema}
-        label={resolvedSchema.title ?? formatMessage("form.defaultTitle")}
-        required={true}
-        pointer=""
-        schemaPointer=""
-        value={formData}
-        onChange={handleFieldChange}
-        widgets={widgets}
-        virtualization={options?.virtualization}
-        validationErrors={validationErrors}
-      />
+      <FieldValidationMessagesProvider byPointer={validationMessages.byPointer} enabled={showFieldMessages}>
+        <SchemaFieldRenderer
+          schema={resolvedSchema}
+          label={resolvedSchema.title ?? formatMessage("form.defaultTitle")}
+          required={true}
+          pointer=""
+          schemaPointer=""
+          value={formData}
+          onChange={handleFieldChange}
+          widgets={widgets}
+          virtualization={options?.virtualization}
+          validationErrors={validationErrors}
+        />
+      </FieldValidationMessagesProvider>
+      {showFormMessages && validationMessages.summary.length > 0 ? (
+        <div className="raf-form-messages" role="alert">
+          <p className="raf-form-messages-title">{formatMessage("validation.summaryTitle")}</p>
+          <ul className="raf-form-message-list">
+            {validationMessages.summary.map((entry, index) => (
+              <li key={`${entry.pointer}-${index}`} className="raf-form-message">
+                <span className="raf-form-message-pointer">{entry.pointer || "/"}</span>
+                <span className="raf-form-message-text">{entry.message}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -222,8 +256,8 @@ function appendPeerSchema(
     Object.assign(next, peerSchemas);
   }
 
-  next[requestedRef] = schema;
-
+  // Registered by document identity only. A key carrying a JSON pointer fragment would become part of the
+  // candidate identifier and inline the whole document instead of the referenced subschema.
   const requestedRootId = extractReferenceRootId(requestedRef);
   if (requestedRootId) {
     next[requestedRootId] = schema;

@@ -76,7 +76,7 @@ export function SchemaFormArray({
   }, [renderedItems.length]);
 
   return (
-    <FieldShell label={label} required={required} controls={controls}>
+    <FieldShell label={label} required={required} controls={controls} pointer={pointer}>
       <div>
         <CollectionRenderer
           items={renderedItems}
