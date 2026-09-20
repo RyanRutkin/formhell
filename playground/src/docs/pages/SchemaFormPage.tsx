@@ -538,26 +538,7 @@ const virtualizer: FormHellVirtualizerFactory = {
         <SchemaForm schema={advancedExampleSchema} />
       </ExamplePanel>
       <CodeBlock
-        code={`const advancedSchema = {
-  type: "object",
-  properties: {
-    role: { type: "string", enum: ["admin", "editor", "viewer"] },
-    tags: {
-      type: "array",
-      prefixItems: [{ type: "string" }, { type: "integer" }],
-      items: false,
-      minItems: 2
-    },
-    metadata: {
-      type: "object",
-      patternProperties: { "^x-": { type: "string" } },
-      unevaluatedProperties: { type: "string" }
-    }
-  },
-  dependentRequired: { role: ["tags"] },
-  if: { properties: { role: { const: "admin" } } },
-  then: { properties: { metadata: { properties: { "x-audit": { type: "string" } } } } }
-};`}
+        code={`const advancedSchema = ${JSON.stringify(advancedExampleSchema, null, 2)};`}
       />
       <ul>
         <li><strong><code>role</code> with <code>enum</code></strong> &mdash; renders as a select field limited to the listed values.</li>
