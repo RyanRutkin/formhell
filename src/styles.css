@@ -231,6 +231,26 @@
   gap: 0.5rem;
 }
 
+.raf-dynamic-property-add {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+}
+
+.raf-union-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+}
+
+.raf-field-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--mui-palette-error-main, #b42318);
+}
+
 .raf-type-list-row + .raf-type-list-row {
   margin-top: 0.25rem;
 }

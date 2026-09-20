@@ -22,6 +22,8 @@ export interface SchemaFormArrayProps extends FieldComponentProps<unknown[]> {
   itemSchemas?: JSONSchema[];
   canAddItem?: boolean;
   canRemoveItems?: boolean;
+  /** Leading items that cannot be removed, such as declared `prefixItems` tuple positions. */
+  lockedItemCount?: number;
   virtualization?: SchemaFormArrayVirtualizationOptions;
   getItemKey?: (value: unknown, index: number) => string;
   preferItemKeys?: boolean;

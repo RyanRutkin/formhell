@@ -15,6 +15,7 @@ export function SchemaFormArray({
   controls,
   canAddItem,
   canRemoveItems,
+  lockedItemCount = 0,
   onChange,
   renderItem,
   createDefaultItem,
@@ -90,7 +91,7 @@ export function SchemaFormArray({
             return (
             <div className="raf-array-item" data-raf-array-item-index={index}>
               {renderItem(index, itemPointer, item)}
-              {canRemoveItems === false ? null : (
+              {canRemoveItems === false || index < lockedItemCount ? null : (
                 <div className="raf-button-row">
                   <button
                     className="raf-button raf-button-danger"

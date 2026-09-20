@@ -111,6 +111,8 @@ export function SchemaFormPage() {
         <li>Handles nested objects/arrays recursively.</li>
         <li>Validates schema and data continuously.</li>
         <li>Resolves <code>$ref</code> references, including async peer schema fallback.</li>
+        <li>Applies conditional and composition keywords against the current data (<code>if</code>/<code>then</code>/<code>else</code>, <code>allOf</code>, <code>anyOf</code>, <code>oneOf</code>, <code>dependentSchemas</code>, <code>dependentRequired</code>).</li>
+        <li>Renders schema-described dynamic members (<code>patternProperties</code>, <code>additionalProperties</code>, <code>unevaluatedProperties</code>) with an add-property control.</li>
         <li>Supports type-based and pointer-based widget overrides.</li>
         <li>Generates default values (<code>all</code> or <code>required-only</code>).</li>
         <li>Emits rich change metadata (<code>fieldPointer</code>, <code>prev</code>, <code>next</code>).</li>
@@ -553,6 +555,8 @@ const virtualizer: FormHellVirtualizerFactory = {
           &mdash; any property whose name matches <code>^x-</code> is treated as a declared string field, while
           <code> unevaluatedProperties</code> controls whether/what additional properties not matched by any
           <code> patternProperties</code>/<code>properties</code> rule are still permitted and how they render.
+          Because the schema describes extra members, the object also gets an add-property control; names are
+          checked against <code>propertyNames</code> and the matching rule before being added.
         </li>
         <li>
           <strong><code>dependentRequired</code></strong> &mdash; makes <code>tags</code> required only once
@@ -561,13 +565,28 @@ const virtualizer: FormHellVirtualizerFactory = {
         <li>
           <strong><code>if</code> / <code>then</code></strong> &mdash; when <code>role</code> is exactly
           <code> &quot;admin&quot;</code>, an additional <code>x-audit</code> field becomes part of the effective
-          <code> metadata</code> schema; for any other role, that field is not part of the schema at all.
+          <code> metadata</code> schema and appears in the form; for any other role, that field is not part of the
+          schema at all. The <code>if</code> also lists <code>role</code> as <code>required</code>, so the condition
+          does not match vacuously before a role has been chosen.
         </li>
       </ul>
       <p>
         Beyond what this example shows, FormHell also supports the rest of the composition and conditional keyword
         set exercised by <code>SchemaBuilder</code>: <code>allOf</code>, <code>anyOf</code>, <code>oneOf</code>,
         <code> not</code>, <code>dependentSchemas</code>, <code>propertyNames</code>, and <code>unevaluatedItems</code>.
+      </p>
+      <p>
+        Conditional and composition keywords are resolved against the data currently in the form, and the result is
+        recomputed on every change. <code>allOf</code> members are always merged. For <code>anyOf</code> and
+        <code> oneOf</code>, one branch is rendered at a time, and how that branch is chosen depends on the union.
+        When every branch pins the same property to a distinct <code>const</code>, that property is the
+        discriminator: it renders as a select offering each branch&rsquo;s value (even if the base schema declares no
+        <code> enum</code> of its own), and choosing a value switches branches. No branch is merged until the
+        discriminator has a value. Unions without a discriminator get an explicit <em>Variant</em> control instead;
+        switching it drops members that only the previous branch declared and seeds the new branch&rsquo;s required
+        and <code>const</code> members. Unions nested inside a selected branch are resolved the same way and get
+        their own control, labelled <em>Variant 1</em>, <em>Variant 2</em> and so on.
+        <code> not</code> constrains validation but contributes no fields to render.
       </p>
     </article>
   );

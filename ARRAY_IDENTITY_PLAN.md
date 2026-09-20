@@ -101,6 +101,45 @@ Audit the remaining O(n)-per-render work on the virtualized path:
 - `fixedTupleValue` mapping in `SchemaFieldRenderer`.
 - `validationErrors` scans in `SchemaFormArray.valueErrorsIndex`.
 
+## Step 4 — Applicator keyword rendering (DONE)
+
+`SchemaFieldRenderer` previously rendered only the literal `properties` map, so `if`/`then`/`else`, `allOf`,
+`anyOf`, `oneOf`, `dependentSchemas`, `dependentRequired`, `patternProperties`, `additionalProperties`,
+`unevaluatedProperties` and `unevaluatedItems` contributed nothing to the form even though the docs claimed
+support and AJV validated against them.
+
+- `src/utils/effectiveSchema.ts` — `resolveEffectiveSchema(schema, value)` collapses applicator keywords
+  against the instance being edited, iterating to a fixed point (capped at 10 passes). Predicates are compiled
+  with a module-level Ajv 2020 instance and cached in a `WeakMap` keyed by schema object; a compile failure
+  degrades to "no match" rather than throwing.
+- Union branches (`anyOf` / `oneOf`): exactly one branch renders, and selection depends on the union shape.
+  - **Discriminated** — every branch pins the same property to a distinct `const`. That property becomes the
+    control: its `enum` is synthesized from the branch consts (so it works even when the base schema declares
+    no `enum`), the branch `const` is stripped so the field stays editable, and selection matches on the
+    discriminator *value*. Matching via generic validation was wrong here: `properties` alone matches
+    vacuously while the discriminator is unset, which silently merged the first branch.
+  - **Undiscriminated** — an explicit `Variant` select renders, backed by a `branchOverrides` map in
+    `SchemaFieldRenderer` keyed by a stable union id. Ids come from a `WeakMap` on the declared branch array,
+    whose identity survives merging. Switching calls `switchUnionBranchValue`, which drops members only the
+    previous branch declared and seeds the new branch's required and `const` members.
+  - **Nested** — a union introduced by a merged branch (or by `allOf` / `then`) gets its own control too.
+    Unions are drained in an inner loop before the applicator merge step, because the merge strips the union
+    keywords; resolving only once per pass returned early and silently discarded the nested union. Multiple
+    controls on one node are labelled `Variant 1`, `Variant 2`, and so on.
+  - Without this, selecting a branch applied its `const` to the discriminator, which tripped `isConstLocked`
+    and permanently locked the only field that could switch branches.
+- `src/utils/dynamicProperties.ts` — members described by `patternProperties` / `additionalProperties` /
+  `unevaluatedProperties` render as fields with a remove control, plus an add-property control gated by
+  `propertyNames`. **Deliberately narrow:** a member that no keyword describes does not render, so objects
+  without those keywords behave exactly as before. An earlier version fell back to `{}` for undescribed keys
+  and regressed three playground tests by rendering stray data keys as loose text inputs.
+- Arrays: entries past `prefixItems` are governed by `items`, then `unevaluatedItems`. `items: false` still
+  closes the tuple. `lockedItemCount` (new optional `SchemaFormArrayProps` field) keeps declared tuple
+  positions non-removable while extra entries can be removed.
+- `JSONSchema.unevaluatedProperties` / `unevaluatedItems` widened to `JSONSchema | boolean` to match the spec
+  and the sibling `items` / `additionalProperties` declarations.
+- Validation still runs against the original schema; the effective schema is only used for rendering.
+
 ## Validation
 
 - Tests: `npx vitest run` from `playground/`. Baseline before this work was 66 passed / 3 skipped; it is
