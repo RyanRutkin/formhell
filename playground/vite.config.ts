@@ -11,6 +11,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, "index.html"),
+        playground: path.resolve(__dirname, "playground.html"),
         benchmark: path.resolve(__dirname, "benchmark.html")
       }
     }

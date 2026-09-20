@@ -1,14 +1,16 @@
 .raf-schema-form {
-  --raf-color-border: var(--mui-palette-divider, #d9dce1);
-  --raf-color-border-focus: var(--mui-palette-primary-main, #1976d2);
-  --raf-color-label: var(--mui-palette-text-primary, #2a3340);
-  --raf-color-muted: var(--mui-palette-text-secondary, #6c7684);
-  --raf-color-surface: var(--mui-palette-background-paper, #ffffff);
-  --raf-color-surface-alt: color-mix(in srgb, var(--mui-palette-background-paper, #f8f9fb) 82%, var(--mui-palette-background-default, #ffffff));
-  --raf-color-danger: var(--mui-palette-error-main, #b42318);
+  /* Preserve a consumer-provided --raf-color-* override from an ancestor scope; only fall
+     through to the MUI variable / hard-coded default when no such override is inherited. */
+  --raf-color-border: var(--raf-color-border, var(--mui-palette-divider, #d9dce1));
+  --raf-color-border-focus: var(--raf-color-border-focus, var(--mui-palette-primary-main, #1976d2));
+  --raf-color-label: var(--raf-color-label, var(--mui-palette-text-primary, #2a3340));
+  --raf-color-muted: var(--raf-color-muted, var(--mui-palette-text-secondary, #6c7684));
+  --raf-color-surface: var(--raf-color-surface, var(--mui-palette-background-paper, #ffffff));
+  --raf-color-surface-alt: var(--raf-color-surface-alt, color-mix(in srgb, var(--mui-palette-background-paper, #f8f9fb) 82%, var(--mui-palette-background-default, #ffffff)));
+  --raf-color-danger: var(--raf-color-danger, var(--mui-palette-error-main, #b42318));
   --raf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
   --raf-shadow-md: 0 8px 20px rgba(0, 0, 0, 0.32);
-  color: var(--mui-palette-text-primary, #101828);
+  color: var(--raf-color-label, var(--mui-palette-text-primary, #101828));
   font-family: "Segoe UI", "Helvetica Neue", Helvetica, sans-serif;
 }
 
@@ -56,7 +58,7 @@
   border-radius: 0.625rem;
   font-size: 0.95rem;
   padding: 0.625rem 0.75rem;
-  color: var(--mui-palette-text-primary, #101828);
+  color: var(--raf-color-label, var(--mui-palette-text-primary, #101828));
   transition: border-color 120ms ease, box-shadow 120ms ease;
   box-shadow: var(--raf-shadow-sm);
 }
@@ -65,7 +67,7 @@
 .raf-select:focus {
   border-color: var(--raf-color-border-focus);
   outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mui-palette-primary-main, #1976d2) 24%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--raf-color-border-focus) 24%, transparent);
 }
 
 .raf-input:disabled,
@@ -657,16 +659,17 @@
   }
 }
 
-/* Consume MUI CSS variables when a host application provides them. */
+/* Consume MUI CSS variables when a host application provides them; a --raf-color-* override
+   set on an ancestor still wins, since it's checked before the MUI variable. */
 .raf-schema-form {
-  --raf-mui-surface: var(--mui-palette-background-paper, #ffffff);
-  --raf-mui-surface-alt: var(--mui-palette-background-default, #f8f9fb);
-  --raf-mui-text: var(--mui-palette-text-primary, #101828);
-  --raf-mui-muted: var(--mui-palette-text-secondary, #6c7684);
-  --raf-mui-border: var(--mui-palette-divider, #d9dce1);
-  --raf-mui-primary: var(--mui-palette-primary-main, #1976d2);
+  --raf-mui-surface: var(--raf-color-surface, var(--mui-palette-background-paper, #ffffff));
+  --raf-mui-surface-alt: var(--raf-color-surface-alt, var(--mui-palette-background-default, #f8f9fb));
+  --raf-mui-text: var(--raf-color-label, var(--mui-palette-text-primary, #101828));
+  --raf-mui-muted: var(--raf-color-muted, var(--mui-palette-text-secondary, #6c7684));
+  --raf-mui-border: var(--raf-color-border, var(--mui-palette-divider, #d9dce1));
+  --raf-mui-primary: var(--raf-color-border-focus, var(--mui-palette-primary-main, #1976d2));
   --raf-mui-secondary: var(--mui-palette-secondary-main, #667085);
-  --raf-mui-error: var(--mui-palette-error-main, #b42318);
+  --raf-mui-error: var(--raf-color-danger, var(--mui-palette-error-main, #b42318));
 }
 
 .raf-schema-form .raf-input,
@@ -746,14 +749,14 @@
 
 .raf-schema-builder,
 .raf-helper-panel {
-  --raf-mui-surface: var(--mui-palette-background-paper, #ffffff);
-  --raf-mui-surface-alt: var(--mui-palette-background-default, #f8f9fb);
-  --raf-mui-text: var(--mui-palette-text-primary, #101828);
-  --raf-mui-muted: var(--mui-palette-text-secondary, #6c7684);
-  --raf-mui-border: var(--mui-palette-divider, #d9dce1);
-  --raf-mui-primary: var(--mui-palette-primary-main, #1976d2);
+  --raf-mui-surface: var(--raf-color-surface, var(--mui-palette-background-paper, #ffffff));
+  --raf-mui-surface-alt: var(--raf-color-surface-alt, var(--mui-palette-background-default, #f8f9fb));
+  --raf-mui-text: var(--raf-color-label, var(--mui-palette-text-primary, #101828));
+  --raf-mui-muted: var(--raf-color-muted, var(--mui-palette-text-secondary, #6c7684));
+  --raf-mui-border: var(--raf-color-border, var(--mui-palette-divider, #d9dce1));
+  --raf-mui-primary: var(--raf-color-border-focus, var(--mui-palette-primary-main, #1976d2));
   --raf-mui-secondary: var(--mui-palette-secondary-main, #667085);
-  --raf-mui-error: var(--mui-palette-error-main, #b42318);
+  --raf-mui-error: var(--raf-color-danger, var(--mui-palette-error-main, #b42318));
   color: var(--raf-mui-text);
 }
 
@@ -826,13 +829,13 @@
 }
 
 .raf-info-modal {
-  --raf-mui-surface: var(--mui-palette-background-paper, #ffffff);
-  --raf-mui-surface-alt: var(--mui-palette-background-default, #f8fafc);
-  --raf-mui-text: var(--mui-palette-text-primary, #344054);
-  --raf-mui-border: var(--mui-palette-divider, #cfd7e3);
-  --raf-mui-primary: var(--mui-palette-primary-main, #1976d2);
+  --raf-mui-surface: var(--raf-color-surface, var(--mui-palette-background-paper, #ffffff));
+  --raf-mui-surface-alt: var(--raf-color-surface-alt, var(--mui-palette-background-default, #f8fafc));
+  --raf-mui-text: var(--raf-color-label, var(--mui-palette-text-primary, #344054));
+  --raf-mui-border: var(--raf-color-border, var(--mui-palette-divider, #cfd7e3));
+  --raf-mui-primary: var(--raf-color-border-focus, var(--mui-palette-primary-main, #1976d2));
   --raf-mui-secondary: var(--mui-palette-secondary-main, #667085);
-  --raf-mui-error: var(--mui-palette-error-main, #b42318);
+  --raf-mui-error: var(--raf-color-danger, var(--mui-palette-error-main, #b42318));
   background: var(--raf-mui-surface);
   border-color: var(--raf-mui-border);
   color: var(--raf-mui-text);

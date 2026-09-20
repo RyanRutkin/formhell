@@ -53,6 +53,7 @@
     "playground:dev": "npm --prefix playground run dev",
     "playground:build": "npm --prefix playground run build",
     "playground:preview": "npm --prefix playground run preview",
+    "docs:dev": "npm --prefix playground run dev:docs",
     "prepublishOnly": "npm run build",
     "publish:npm": "npm publish --access public"
   },

@@ -125,7 +125,7 @@ Choose how aggressively defaults are generated.
 
 #### `options.virtualization?: SchemaFormVirtualizationOptions`
 
-Virtualization is opt-in and is disabled by default. When enabled, FormHell virtualizes large homogeneous arrays while preserving the normal renderer for small arrays, tuple arrays, and nested arrays. The core package does not depend on TanStack.
+Virtualization is opt-in and is disabled by default. When enabled, FormHell virtualizes large homogeneous arrays while preserving the normal renderer for small arrays, tuple arrays, and nested arrays.
 
 ```tsx
 <SchemaForm
@@ -192,7 +192,7 @@ Path precedence is exact path, wildcard path, global array settings, then normal
 
 ### Custom virtualizer adapters
 
-The public adapter contract is dependency-free and does not expose TanStack types. A custom implementation can be supplied when the built-in renderer should use another range/measurement engine:
+The public adapter contract is dependency-free. A custom implementation can be supplied when the built-in renderer should use another range/measurement engine:
 
 ```tsx
 import type { FormHellVirtualizerFactory } from "formhell";
@@ -225,7 +225,7 @@ const virtualizer: FormHellVirtualizerFactory = {
 />
 ```
 
-The factory is created independently for each collection. `getItemKey` receives the configured row identity for each index. The core package remains free of TanStack dependencies; a future `formhell-virtualization-tanstack` package can implement this contract, and a later full-renderer plugin can replace collection rendering entirely.
+The factory is created independently for each collection. `getItemKey` receives the configured row identity for each index.
 
 The built-in implementation measures mounted rows and supports variable-height nested object content. Nested arrays are not automatically virtualized, so a deeply nested schema does not create a stack of nested scroll areas. This keeps mobile interaction manageable. On mobile, use a responsive height such as `min(70vh, 36rem)` and consider providing a larger/full-screen collection experience at the application level.
 
@@ -262,8 +262,6 @@ For reorderable arrays, or arrays containing duplicate objects, the recommended 
 ```
 
 The resolver must return a unique, stable value for each sibling item. Do not generate a random UUID during render; that changes the React key on every render and causes rows to remount. Do not add an internal identity property to the JSON data.
-
-The virtualizer factory is a public FormHell-owned contract. TanStack types are intentionally excluded from it so external adapters can be versioned independently. The future TanStack package will be optional and will not be added to the core `formhell` dependency graph.
 
 ### Supported shapes and nested behavior
 
@@ -850,8 +848,9 @@ MUI is intentionally not listed as a FormHell dependency. Applications that use 
 
 - `npm run build` build library output to `dist`.
 - `npm run typecheck` run TypeScript checks.
-- `npm run playground:dev` run the local playground app.
-- `npm run playground:build` build the playground app.
+- `npm run playground:dev` run the local interactive playground app.
+- `npm run docs:dev` run the local documentation site.
+- `npm run playground:build` build the playground app (includes the docs site and benchmark page).
 - `npm run playground:preview` preview built playground output.
 
 ## Local Playground
