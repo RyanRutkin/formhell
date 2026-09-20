@@ -155,11 +155,13 @@ Virtualization options:
 - `arrays.overscan`: Number of extra rows mounted before and after the visible range. Higher values improve fast-scroll continuity but increase rendering work. The default is `4`.
 - `arrays.itemKey`: Optional resolver for domain-level row identity, such as an API object's `id`. JSON Pointer paths remain index-based for data semantics.
 - `arrays.virtualizer`: Optional `FormHellVirtualizerFactory` implementation. The built-in virtualizer remains the default.
-- `objects.enabled` and `objects.threshold`: Reserved for future progressive/object virtualization work and currently do not enable object-property virtualization.
+- `objects.enabled`: Enables progressive disclosure for large top-level objects. This does not virtualize object properties.
+- `objects.threshold`: Minimum property count before progressive disclosure activates. The default is `100`.
+- `objects.initialVisibleProperties`: Number of optional properties shown initially. Required properties remain visible. The default is `25`.
 
 ### Path-specific array configuration
 
-The global array settings are intentionally the first stable API. For applications with collections of very different sizes, use the later path-specific API to override them by exact JSON Pointer or wildcard path:
+For applications with collections of very different sizes, override global array settings by exact JSON Pointer or wildcard path:
 
 ```tsx
 <SchemaForm
@@ -223,13 +225,34 @@ const virtualizer: FormHellVirtualizerFactory = {
 />
 ```
 
-The factory is created independently for each collection. The core package remains free of TanStack dependencies; a future `formhell-virtualization-tanstack` package can implement this contract, and a later full-renderer plugin can replace collection rendering entirely.
+The factory is created independently for each collection. `getItemKey` receives the configured row identity for each index. The core package remains free of TanStack dependencies; a future `formhell-virtualization-tanstack` package can implement this contract, and a later full-renderer plugin can replace collection rendering entirely.
 
 The built-in implementation measures mounted rows and supports variable-height nested object content. Nested arrays are not automatically virtualized, so a deeply nested schema does not create a stack of nested scroll areas. This keeps mobile interaction manageable. On mobile, use a responsive height such as `min(70vh, 36rem)` and consider providing a larger/full-screen collection experience at the application level.
 
 Invalid numeric values are normalized to safe defaults. Tuple arrays (`prefixItems`) and arrays below the threshold remain on the normal rendering path.
 
-The virtualization adapter boundary is intentionally internal while this feature stabilizes. A future optional TanStack integration can provide a virtualizer or replace the full collection renderer without adding TanStack to the core `formhell` dependency graph.
+When `itemKey` is not provided, FormHell maintains internal row identity without adding metadata to your data. JSON Pointer paths still use array indexes, while React/virtualizer identity is tracked separately. Provide `itemKey` when your data has a stable domain identifier and items can be reordered.
+
+The virtualizer factory is a public FormHell-owned contract. TanStack types are intentionally excluded from it so external adapters can be versioned independently. The future TanStack package will be optional and will not be added to the core `formhell` dependency graph.
+
+### Supported shapes and nested behavior
+
+- Large homogeneous `items` arrays are virtualized when enabled and above the threshold.
+- Tuple arrays using `prefixItems` remain on the normal rendering path.
+- Arrays below the threshold remain on the normal rendering path.
+- Nested arrays remain normal by default to avoid stacked scroll containers.
+- A nested array can be explicitly selected with a matching `paths` wildcard rule.
+- Rows can contain deeply nested objects and arrays; measured row heights account for variable nested content.
+
+### Accessibility and mobile behavior
+
+Virtualized collections expose list semantics, total item counts, and item positions through `aria-setsize` and `aria-posinset`. Focused rows are revealed, validation errors scroll to their first invalid item, and add/remove operations preserve focus and announce changes through a localized live region.
+
+On mobile, collections use touch scrolling and a responsive viewport. A mobile-only expand/collapse control can open the collection as a full-screen editing surface. Avoid configuring independent nested scroll regions unless the nested path is intentionally selected.
+
+### Benchmarking
+
+The repository includes a browser benchmark at `playground/benchmark.html`. Run the Playground and open `/benchmark.html` to compare eager arrays, virtualized arrays, and progressive large objects. It reports mounted nodes, React commit duration, commit count, and an end-to-end sample. Use a production preview and browser performance traces for release-quality measurements; the displayed values are comparison data, not universal thresholds.
 
 #### `peerSchemas?: JSONSchema[] | Record<string, JSONSchema>`
 
