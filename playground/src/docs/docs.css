@@ -10,7 +10,13 @@ body {
 }
 
 .docs-root {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: 100vh;
+  width: 100vw;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -77,8 +83,7 @@ body {
 }
 
 .docs-header {
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 10;
   display: flex;
   align-items: center;
@@ -273,7 +278,6 @@ body {
 }
 
 .docs-article {
-  max-width: 52rem;
   margin: 0 auto;
 }
 
@@ -377,6 +381,49 @@ body {
   color: var(--docs-text);
 }
 
+.docs-section {
+  display: flex;
+  min-height: calc(100vh - 2em);
+}
+
+.docs-section-content {
+  flex: 1;
+  padding: 0 2em;
+}
+
+.doc-section-big-boy {
+  flex-shrink: 0;
+  width: 30rem;
+  position: relative;
+}
+
+@media (min-width: 1500px) {
+  .docs-section-demo-wrapper {
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 9em);
+    padding: 1rem;
+  }
+
+  .docs-example {
+    height: 100%;
+  }
+
+  .docs-example-body {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .docs-section-example-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .docs-example-block {
+    flex: 1;
+  }
+}
+
 .docs-builder-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -455,6 +502,7 @@ body {
   background: none;
 }
 
+/* Breakpoints below mirror DOCS_BREAKPOINTS in breakpoints.ts. Update both together. */
 @media (max-width: 900px) {
   .docs-body {
     flex-direction: column;
@@ -505,12 +553,14 @@ body {
   }
 }
 
+/* DOCS_BREAKPOINTS.asyncRefStack */
 @media (max-width: 1160px) {
   .docs-async-ref-demo {
     grid-template-columns: 1fr;
   }
 }
 
+/* DOCS_BREAKPOINTS.themingStack */
 @media (max-width: 1000px) {
   .docs-theming-demo {
     flex-direction: column;
