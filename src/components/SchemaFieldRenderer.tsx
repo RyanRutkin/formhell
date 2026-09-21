@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import { SchemaFormArray } from "./fields/SchemaFormArray";
 import { SchemaFormBoolean } from "./fields/SchemaFormBoolean";
 import { SchemaFormInteger } from "./fields/SchemaFormInteger";
@@ -18,6 +18,8 @@ import type {
 import type { JSONSchema, JSONSchemaType } from "../types/schema";
 import { useFormHellLocale } from "../i18n/LocaleProvider";
 import { createDefaultValueFromSchema } from "../utils/defaultData";
+import { resolveEffectiveSchema, switchUnionBranchValue } from "../utils/effectiveSchema";
+import { isPropertyNameAllowed, resolveDynamicProperties, resolveSchemaForPropertyName } from "../utils/dynamicProperties";
 import { joinPointer } from "../utils/jsonPointer";
 import { resolveArrayVirtualizationOptions } from "../utils/virtualization";
 
@@ -38,7 +40,7 @@ interface SchemaFieldRendererProps {
 
 export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
   const {
-    schema,
+    schema: declaredSchema,
     label,
     required,
     pointer,
@@ -53,6 +55,15 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
   } = props;
   const { formatMessage } = useFormHellLocale();
   const [isObjectExpanded, setIsObjectExpanded] = useState(false);
+  const [newPropertyName, setNewPropertyName] = useState("");
+  const [propertyError, setPropertyError] = useState("");
+  const [branchOverrides, setBranchOverrides] = useState<Record<string, number>>({});
+  const effective = useMemo(
+    () => resolveEffectiveSchema(declaredSchema, value, branchOverrides),
+    [branchOverrides, declaredSchema, value]
+  );
+  const schema = effective.schema;
+  const unions = effective.unions;
   const hasConstValue = Object.prototype.hasOwnProperty.call(schema, "const");
   const lockedValue = hasConstValue ? schema.const : value;
   const isConstLocked = hasConstValue;
@@ -72,8 +83,17 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
     : undefined;
   const singleItemsSchema =
     activeType === "array" && !Array.isArray(schema.items) && isObject(schema.items) ? (schema.items as JSONSchema) : undefined;
+  // With prefixItems present, entries past the tuple are governed by items, then unevaluatedItems.
+  const additionalItemsSchema =
+    activeType === "array"
+      ? schema.items === false
+        ? undefined
+        : singleItemsSchema ?? (isObject(schema.unevaluatedItems) ? (schema.unevaluatedItems as JSONSchema) : undefined)
+      : undefined;
   const itemSchemas = activeType === "array" ? tupleItems ?? (singleItemsSchema ? [singleItemsSchema] : undefined) : undefined;
   const maxItems = activeType === "array" && typeof schema.maxItems === "number" ? schema.maxItems : undefined;
+  const resolveItemSchema = (index: number): JSONSchema =>
+    tupleItems?.[index] ?? singleItemsSchema ?? additionalItemsSchema ?? { type: "string" };
 
   useEffect(() => {
     if (selectedType && schemaTypes.includes(selectedType) && !inferredType) {
@@ -126,7 +146,39 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
       ) : null}
     </div>
   ) : null;
-  const fieldControls = controls && typeChooser ? <>{controls}{typeChooser}</> : controls ?? typeChooser;
+  const branchChoosers = unions.map((union, controlIndex) => (
+    <label className="raf-union-branch" key={union.id}>
+      {unions.length > 1
+        ? formatMessage("union.branchLabelIndexed", { index: controlIndex + 1 })
+        : formatMessage("union.branchLabel")}
+      <select
+        className="raf-select"
+        value={union.selectedIndex}
+        disabled={isConstLocked}
+        onChange={(event) => {
+          const nextIndex = Number(event.target.value);
+          setBranchOverrides((current) => ({ ...current, [union.id]: nextIndex }));
+          onChange(
+            pointer,
+            switchUnionBranchValue(value, union.baseKeys, union.branches[union.selectedIndex], union.branches[nextIndex])
+          );
+        }}
+      >
+        {union.branches.map((branch, index) => (
+          <option key={index} value={index}>
+            {branch.title ?? formatMessage("union.branchOption", { index: index + 1 })}
+          </option>
+        ))}
+      </select>
+    </label>
+  ));
+  const fieldControls = controls || branchChoosers.length > 0 || typeChooser ? (
+    <>
+      {controls}
+      {branchChoosers}
+      {typeChooser}
+    </>
+  ) : undefined;
 
   if (activeType === "object") {
     const ObjectWidget =
@@ -148,6 +200,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
     const visibleEntries = progressiveObjects && !isObjectExpanded
       ? [...requiredEntries, ...optionalEntries.slice(0, visibleOptionalCount)]
       : propertyEntries;
+    const dynamicProperties = resolveDynamicProperties(schema, objectValue);
 
     return (
       <ObjectWidget
@@ -187,6 +240,85 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
             />
           );
         })}
+        {dynamicProperties.entries.map(({ name: propertyName, schema: propertySchema }) => {
+          const childPointer = joinPointer(pointer, propertyName);
+
+          return (
+            <SchemaFieldRenderer
+              key={childPointer}
+              schema={propertySchema}
+              label={propertySchema.title ?? propertyName}
+              required={requiredKeys.has(propertyName)}
+              pointer={childPointer}
+              schemaPointer={joinPointer(joinPointer(schemaPointer, "patternProperties"), propertyName)}
+              value={objectValue[propertyName]}
+              onChange={onChange}
+              widgets={widgets}
+              virtualization={virtualization}
+              virtualizationDepth={virtualizationDepth}
+              validationErrors={validationErrors}
+              controls={
+                isConstLocked ? undefined : (
+                  <button
+                    className="raf-button raf-button-danger"
+                    type="button"
+                    onClick={() => {
+                      const next = { ...objectValue };
+                      delete next[propertyName];
+                      setPropertyError("");
+                      onChange(pointer, next);
+                    }}
+                  >
+                    {formatMessage("object.removeProperty")}
+                  </button>
+                )
+              }
+            />
+          );
+        })}
+        {dynamicProperties.canAddProperties && !isConstLocked ? (
+          <div className="raf-dynamic-property-add">
+            <label className="raf-field-label" htmlFor={`${pointer}-new-property`}>
+              {formatMessage("object.propertyNameLabel")}
+            </label>
+            <div className="raf-button-row">
+              <input
+                id={`${pointer}-new-property`}
+                className="raf-input"
+                value={newPropertyName}
+                placeholder={formatMessage("object.propertyNamePlaceholder")}
+                onChange={(event) => {
+                  setNewPropertyName(event.target.value);
+                  setPropertyError("");
+                }}
+              />
+              <button
+                className="raf-button raf-button-primary"
+                type="button"
+                onClick={() => {
+                  const propertyName = newPropertyName.trim();
+
+                  if (!isPropertyNameAllowed(schema, propertyName) || propertyName in objectValue) {
+                    setPropertyError(formatMessage("object.invalidPropertyName", { name: propertyName }));
+                    return;
+                  }
+
+                  const addedSchema = resolveSchemaForPropertyName(schema, propertyName) ?? {};
+                  setNewPropertyName("");
+                  setPropertyError("");
+                  onChange(pointer, { ...objectValue, [propertyName]: createDefaultValueFromSchema(addedSchema) });
+                }}
+              >
+                {formatMessage("object.addProperty")}
+              </button>
+            </div>
+            {propertyError ? (
+              <p className="raf-field-error" role="alert">
+                {propertyError}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         {progressiveObjects && (isObjectExpanded || optionalEntries.length > visibleOptionalCount) ? (
           <div className="raf-button-row">
             <button
@@ -214,7 +346,12 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
           arrayValue[index] === undefined ? createDefaultValueFromSchema(itemSchema) : arrayValue[index]
         )
       : arrayValue;
-    const canAddItem = tupleItems ? false : arrayValue.length < addLimit;
+    const tupleLength = tupleItems?.length ?? 0;
+    const extraItemValues = tupleItems ? arrayValue.slice(tupleLength) : [];
+    const renderedArrayValue = tupleItems ? [...fixedTupleValue, ...extraItemValues] : fixedTupleValue;
+    const canAddItem = tupleItems
+      ? Boolean(additionalItemsSchema) && renderedArrayValue.length < addLimit
+      : arrayValue.length < addLimit;
     const virtualizationOptions = resolveArrayVirtualizationOptions(
       virtualization,
       arrayValue.length,
@@ -229,7 +366,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
         required={required}
         pointer={pointer}
         schema={schema}
-        value={fixedTupleValue}
+        value={renderedArrayValue}
         disabled={isConstLocked}
         controls={fieldControls}
         onChange={(next) => {
@@ -240,7 +377,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
         }}
         itemsSchema={singleItemsSchema}
         itemSchemas={itemSchemas}
-        createDefaultItem={() => createDefaultValueForArrayItem(itemSchemas, arrayValue.length)}
+        createDefaultItem={() => createDefaultValueFromSchema(resolveItemSchema(renderedArrayValue.length))}
         getItemKey={(item, index) =>
           virtualizationOptions?.itemKey
             ? String(
@@ -248,7 +385,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
                   value: item,
                   index,
                   pointer: joinPointer(pointer, String(index)),
-                  schema: tupleItems?.[index] ?? singleItemsSchema ?? { type: "string" }
+                  schema: resolveItemSchema(index)
                 })
               )
             : `${pointer}/${index}`
@@ -256,15 +393,19 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
         preferItemKeys={Boolean(virtualizationOptions?.itemKey)}
         renderItem={(index, itemPointer, itemValue) => (
           <SchemaFieldRenderer
-            schema={tupleItems?.[index] ?? singleItemsSchema ?? { type: "string" }}
+            schema={resolveItemSchema(index)}
             label={
               tupleItems?.[index]?.title?.trim()
                 ? (tupleItems[index].title as string)
-                : formatMessage(tupleItems ? "array.tupleLabel" : "array.itemLabel", { index: index + 1 })
+                : formatMessage(tupleItems && index < tupleLength ? "array.tupleLabel" : "array.itemLabel", { index: index + 1 })
             }
             required={true}
             pointer={itemPointer}
-            schemaPointer={tupleItems ? joinPointer(joinPointer(schemaPointer, "prefixItems"), String(index)) : joinPointer(schemaPointer, "items")}
+            schemaPointer={
+              tupleItems && index < tupleLength
+                ? joinPointer(joinPointer(schemaPointer, "prefixItems"), String(index))
+                : joinPointer(schemaPointer, tupleItems ? "unevaluatedItems" : "items")
+            }
             value={itemValue}
             onChange={onChange}
             widgets={widgets}
@@ -274,7 +415,8 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
           />
         )}
         canAddItem={canAddItem}
-        canRemoveItems={!tupleItems}
+        canRemoveItems={!tupleItems || Boolean(additionalItemsSchema)}
+        lockedItemCount={tupleLength}
         virtualization={virtualizationOptions}
         validationErrors={validationErrors}
       />
@@ -518,9 +660,4 @@ function createDefaultValueForType(type: JSONSchemaType): unknown {
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function createDefaultValueForArrayItem(itemSchemas: JSONSchema[] | undefined, index: number): unknown {
-  const schema = itemSchemas?.[index] ?? itemSchemas?.[0] ?? itemSchemas?.[itemSchemas.length - 1];
-  return createDefaultValueFromSchema(schema ?? {});
 }

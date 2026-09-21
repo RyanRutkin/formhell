@@ -1,7 +1,6 @@
 import { Fragment, useEffect, useRef, useState, type Key, type ReactNode, type RefCallback } from "react";
 import { useFormHellLocale } from "../../i18n/LocaleProvider";
 import type { FormHellVirtualizerFactory } from "../../types/components";
-import { useStableItemKeys } from "./useStableItemKeys";
 import { useVirtualRange } from "./useVirtualRange";
 
 export interface CollectionVirtualizationOptions {
@@ -18,16 +17,18 @@ interface CollectionRendererProps<TItem> {
   virtualization?: CollectionVirtualizationOptions;
   scrollToIndex?: number;
   preferItemKeys?: boolean;
+  getStableKey: (index: number) => Key;
 }
 
-export function CollectionRenderer<TItem>({ items, getItemKey, renderItem, virtualization, scrollToIndex, preferItemKeys }: CollectionRendererProps<TItem>) {
-  const stableKeys = useStableItemKeys(items, getItemKey, preferItemKeys);
+export function CollectionRenderer<TItem>({ items, getItemKey, renderItem, virtualization, scrollToIndex, preferItemKeys, getStableKey }: CollectionRendererProps<TItem>) {
+  const resolveKey = (item: TItem, index: number) =>
+    preferItemKeys ? getItemKey(item, index) : getStableKey(index);
 
   if (!virtualization) {
     return (
       <>
         {items.map((item, index) => (
-          <Fragment key={stableKeys[index]}>{renderItem(item, index)}</Fragment>
+          <Fragment key={resolveKey(item, index)}>{renderItem(item, index)}</Fragment>
         ))}
       </>
     );
@@ -40,7 +41,8 @@ export function CollectionRenderer<TItem>({ items, getItemKey, renderItem, virtu
       renderItem={renderItem}
       virtualization={virtualization}
       scrollToIndex={scrollToIndex}
-      stableKeys={stableKeys}
+      getStableKey={getStableKey}
+      resolveKey={resolveKey}
     />
   );
 }
@@ -51,10 +53,10 @@ function VirtualizedCollection<TItem>({
   renderItem,
   virtualization,
   scrollToIndex,
-  stableKeys
+  resolveKey
 }: CollectionRendererProps<TItem> & {
   virtualization: CollectionVirtualizationOptions;
-  stableKeys: Key[];
+  resolveKey: (item: TItem, index: number) => Key;
 }) {
   const { formatMessage } = useFormHellLocale();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -144,7 +146,7 @@ function VirtualizedCollection<TItem>({
             const index = range.startIndex + relativeIndex;
             return (
               <div
-                key={stableKeys[index]}
+                key={resolveKey(item, index)}
                 ref={getMeasuredRef(index)}
                 className="raf-virtualized-collection-item"
                 role="listitem"

@@ -231,6 +231,77 @@
   gap: 0.5rem;
 }
 
+.raf-dynamic-property-add {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+}
+
+.raf-union-branch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+}
+
+.raf-field-error {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--mui-palette-error-main, #b42318);
+}
+
+.raf-field-messages {
+  list-style: none;
+  margin: 0.375rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.raf-field-message {
+  font-size: 0.8125rem;
+  color: var(--mui-palette-error-main, #b42318);
+}
+
+.raf-form-messages {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border: 0.0625rem solid var(--mui-palette-error-main, #b42318);
+  border-radius: 0.5rem;
+  background: var(--mui-palette-background-paper, #ffffff);
+}
+
+.raf-form-messages-title {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--mui-palette-error-main, #b42318);
+}
+
+.raf-form-message-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.raf-form-message {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--mui-palette-text-primary, #101828);
+}
+
+.raf-form-message-pointer {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--mui-palette-text-secondary, #475467);
+  flex-shrink: 0;
+}
+
 .raf-type-list-row + .raf-type-list-row {
   margin-top: 0.25rem;
 }

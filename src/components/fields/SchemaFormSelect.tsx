@@ -2,13 +2,13 @@ import type { FieldComponentProps } from "../../types/components";
 import { useFormHellLocale } from "../../i18n/LocaleProvider";
 import { FieldShell } from "./FieldShell";
 
-export function SchemaFormSelect({ label, required, schema, value, disabled, controls, onChange }: FieldComponentProps<unknown>) {
+export function SchemaFormSelect({ label, required, schema, value, disabled, controls, pointer, onChange }: FieldComponentProps<unknown>) {
   const { formatMessage } = useFormHellLocale();
   const options = Array.isArray(schema.enum) ? schema.enum : [];
   const selectedValue = encodeEnumValue(value);
 
   return (
-    <FieldShell label={label} required={required} controls={controls}>
+    <FieldShell label={label} required={required} controls={controls} pointer={pointer}>
       <select
         className="raf-select"
         value={selectedValue}

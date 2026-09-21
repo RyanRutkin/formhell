@@ -36,6 +36,21 @@ export interface FormHellMessages {
   object: {
     showMore: string;
     showLess: string;
+    addProperty: string;
+    propertyNameLabel: string;
+    propertyNamePlaceholder: string;
+    removeProperty: string;
+    invalidPropertyName: string;
+    propertyAdded: string;
+    propertyRemoved: string;
+  };
+  union: {
+    branchLabel: string;
+    branchLabelIndexed: string;
+    branchOption: string;
+  };
+  validation: {
+    summaryTitle: string;
   };
 }
 
@@ -76,6 +91,21 @@ export const defaultMessages: FormHellMessages = {
   },
   object: {
     showMore: "Show {count} more properties",
-    showLess: "Show fewer properties"
+    showLess: "Show fewer properties",
+    addProperty: "Add Property",
+    propertyNameLabel: "New property name",
+    propertyNamePlaceholder: "Property name",
+    removeProperty: "Remove property",
+    invalidPropertyName: "\"{name}\" is not an allowed property name for this object.",
+    propertyAdded: "Property {name} added",
+    propertyRemoved: "Property {name} removed"
+  },
+  union: {
+    branchLabel: "Variant",
+    branchLabelIndexed: "Variant {index}",
+    branchOption: "Option {index}"
+  },
+  validation: {
+    summaryTitle: "Please correct the following:"
   }
 };

@@ -269,7 +269,12 @@ function mergeCandidates(...candidateGroups: SchemaCandidate[][]): SchemaCandida
 }
 
 function findBestCandidate(ref: string, candidates: SchemaCandidate[]): SchemaCandidate | undefined {
-  const matches = candidates.filter((candidate) => ref.startsWith(candidate.identifier));
+  // Candidate keys are compared without their fragment so that the ref's own fragment survives as the
+  // JSON pointer into the matched document.
+  const matches = candidates
+    .map((candidate) => ({ schema: candidate.schema, identifier: stripFragment(candidate.identifier) }))
+    .filter((candidate) => candidate.identifier.length > 0 && ref.startsWith(candidate.identifier));
+
   matches.sort((a, b) => b.identifier.length - a.identifier.length);
   return matches[0];
 }

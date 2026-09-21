@@ -5,6 +5,7 @@ export { SchemaBuilder } from "./components/SchemaBuilder";
 export { SchemaBuilderHelper } from "./components/SchemaBuilder";
 
 export { FormHellLocaleProvider, useFormHellLocale, resolveDirection } from "./i18n/LocaleProvider";
+export { useFormHellFieldValidationMessages } from "./components/FieldValidationMessages";
 export { defaultMessages } from "./i18n/messages";
 
 export type { FormHellMessages } from "./i18n/messages";
@@ -32,6 +33,8 @@ export type {
 	SchemaFormVirtualizationArrayOptions,
 	SchemaFormVirtualizationOptions,
 	SchemaFormValidationError,
+	SchemaFormValidationMessageContext,
+	SchemaFormValidationMessageFormatter,
 	SchemaBuilderProps,
 	SchemaBuilderHelperProps,
 	SchemaBuilderHelperContent,

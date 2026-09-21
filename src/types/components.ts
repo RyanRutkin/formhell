@@ -22,6 +22,8 @@ export interface SchemaFormArrayProps extends FieldComponentProps<unknown[]> {
   itemSchemas?: JSONSchema[];
   canAddItem?: boolean;
   canRemoveItems?: boolean;
+  /** Leading items that cannot be removed, such as declared `prefixItems` tuple positions. */
+  lockedItemCount?: number;
   virtualization?: SchemaFormArrayVirtualizationOptions;
   getItemKey?: (value: unknown, index: number) => string;
   preferItemKeys?: boolean;
@@ -86,9 +88,28 @@ export interface SchemaFormWidgets {
   Array?: ComponentType<SchemaFormArrayProps>;
 }
 
+export interface SchemaFormValidationMessageContext {
+  error: SchemaFormValidationError;
+  /** The resolved schema for the field the error points at. */
+  schema: JSONSchema;
+  pointer: string;
+  previousValue: unknown;
+  value: unknown;
+}
+
+/** Return an empty string, `null` or `undefined` to suppress the message entirely. */
+export type SchemaFormValidationMessageFormatter = (
+  context: SchemaFormValidationMessageContext
+) => string | null | undefined;
+
 export interface SchemaFormOptions {
   defaults?: "all" | "required-only";
   virtualization?: SchemaFormVirtualizationOptions;
+  /** Render validation messages beneath the field they relate to. Defaults to `true`. */
+  showFieldValidationMessages?: boolean;
+  /** Render the aggregated validation messages below the form. Defaults to `true`. */
+  showFormValidationMessages?: boolean;
+  formatValidationMessage?: SchemaFormValidationMessageFormatter;
 }
 
 export interface SchemaFormVirtualizationOptions {

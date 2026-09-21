@@ -1,9 +1,9 @@
 import type { FieldComponentProps } from "../../types/components";
 import { FieldShell } from "./FieldShell";
 
-export function SchemaFormString({ label, required, value, disabled, controls, onChange }: FieldComponentProps<string>) {
+export function SchemaFormString({ label, required, value, disabled, controls, pointer, onChange }: FieldComponentProps<string>) {
   return (
-    <FieldShell label={label} required={required} controls={controls}>
+    <FieldShell label={label} required={required} controls={controls} pointer={pointer}>
       <input
         className="raf-input"
         type="text"
