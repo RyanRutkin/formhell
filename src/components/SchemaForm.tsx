@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   SchemaFormChangeHandler,
-  SchemaFormLooseProps,
-  SchemaFormStrictProps,
+  SchemaFormProps,
   SchemaFormValidationError
 } from "../types/components";
 import type { JSONSchema, OutputData, PeerSchemasInput } from "../types/schema";
@@ -15,9 +14,7 @@ import { buildValidationMessages } from "../utils/validationMessages";
 import { FieldValidationMessagesProvider } from "./FieldValidationMessages";
 import { SchemaFieldRenderer } from "./SchemaFieldRenderer";
 
-export function SchemaForm(props: SchemaFormLooseProps): React.ReactElement;
-export function SchemaForm<TData>(props: SchemaFormStrictProps<TData>): React.ReactElement;
-export function SchemaForm<TData>(props: SchemaFormLooseProps | SchemaFormStrictProps<TData>) {
+export function SchemaForm<TData = OutputData>(props: SchemaFormProps<TData>) {
   const { schema, peerSchemas, getSchema, widgets, options, data } = props;
   const onChange = props.onChange as SchemaFormChangeHandler<OutputData> | undefined;
   const { formatMessage, direction } = useFormHellLocale();

@@ -21,8 +21,6 @@ export type {
 export type { JSONSchema, JSONSchemaType, OutputData, PeerSchemasInput } from "./types/schema";
 export type {
 	SchemaFormProps,
-	SchemaFormLooseProps,
-	SchemaFormStrictProps,
 	SchemaFormChangeHandler,
 	SchemaFormWidgets,
 	SchemaFormOptions,

@@ -530,12 +530,6 @@ export function SchemaFormPage() {
                             builds initial data from the schema and the active defaults strategy.
                         </li>
                         <li>
-                            <strong><code>strict?: true</code></strong> &mdash; opts into the generic data contract. Supply a TypeScript type
-                            and both <code>data</code> and the first <code>onChange</code> argument use that type:
-                            <code> &lt;SchemaForm&lt;AccessRequest&gt; strict ... /&gt;</code>. Runtime validation still uses the resolved
-                            JSON Schema.
-                        </li>
-                        <li>
                             <strong><code>options?.defaults: &quot;all&quot; | &quot;required-only&quot;</code></strong> &mdash; controls how
                             aggressively default values are generated for properties that don&rsquo;t already have a value.
                             <code> &quot;all&quot;</code> populates every property that has a usable default or an inferable empty value for
@@ -581,8 +575,9 @@ export function SchemaFormPage() {
 
                                         <h3>Strict data typing</h3>
                                         <p>
-                                                <code>SchemaForm</code> is generic. Pass your data type and set <code>strict</code> to type the controlled
-                                                <code> data</code> prop and the data returned to <code>onChange</code>:
+                                            <code>SchemaForm</code> is generic. Pass your data type to type the controlled <code>data</code> prop and
+                                            the data returned to <code>onChange</code>. When no generic is supplied, the data type defaults to
+                                            <code> unknown</code>:
                                         </p>
                                         <CodeBlock
                                                 code={`type AccessRequest = {
@@ -591,7 +586,6 @@ export function SchemaFormPage() {
 };
 
 <SchemaForm<AccessRequest>
-    strict
     schema={accessRequestSchema}
     data={formData}
     onChange={(data) => {

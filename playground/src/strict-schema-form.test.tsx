@@ -26,11 +26,10 @@ const schema: JSONSchema = {
   }
 };
 
-describe("SchemaForm strict typing", () => {
-  it("types data and onChange with the supplied generated type", () => {
+describe("SchemaForm generic typing", () => {
+  it("types data and onChange with the supplied type", () => {
     const element = (
       <SchemaForm<GeneratedInventory>
-        strict
         schema={schema}
         data={{ items: [{ sku: "SKU-1000", quantity: 2 }] }}
         onChange={(data) => {
@@ -40,10 +39,10 @@ describe("SchemaForm strict typing", () => {
       />
     );
 
-    expect(element.props.strict).toBe(true);
+    expect(element).not.toBeNull();
   });
 
-  it("keeps loose mode data unknown", () => {
+  it("defaults data to unknown when no generic is supplied", () => {
     const element = (
       <SchemaForm
         schema={schema}
@@ -53,19 +52,12 @@ describe("SchemaForm strict typing", () => {
       />
     );
 
-    expect(element.props.strict).toBeUndefined();
-  });
-
-  it("requires strict mode when a generic data type is supplied", () => {
-    // @ts-expect-error A generic SchemaForm invocation must opt into strict mode.
-    const element = <SchemaForm<GeneratedInventory> schema={schema} />;
     expect(element).not.toBeNull();
   });
 
   it("rejects data that does not match the supplied type", () => {
     const element = (
       <SchemaForm<GeneratedInventory>
-        strict
         schema={schema}
         // @ts-expect-error quantity is generated as a number.
         data={{ items: [{ sku: "SKU-1000", quantity: "two" }] }}

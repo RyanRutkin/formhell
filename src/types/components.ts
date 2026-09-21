@@ -133,12 +133,14 @@ export interface SchemaFormVirtualizationArrayOptions {
     virtualizer?: FormHellVirtualizerFactory;
 }
 
-interface SchemaFormSharedProps {
+export interface SchemaFormProps<TData = OutputData> {
   schema: JSONSchema;
   peerSchemas?: PeerSchemasInput;
   getSchema?: (requestedSchema: string) => Promise<JSONSchema>;
   widgets?: SchemaFormWidgets;
   options?: SchemaFormOptions;
+  data?: TData;
+  onChange?: SchemaFormChangeHandler<TData>;
 }
 
 export type SchemaFormChangeHandler<TData> = (
@@ -148,21 +150,6 @@ export type SchemaFormChangeHandler<TData> = (
   prev: unknown,
   next: unknown
 ) => void;
-
-export interface SchemaFormLooseProps extends SchemaFormSharedProps {
-  strict?: false;
-  data?: OutputData;
-  onChange?: SchemaFormChangeHandler<OutputData>;
-}
-
-export interface SchemaFormStrictProps<TData> extends SchemaFormSharedProps {
-  /** Enables the generic, compile-time typed data contract. Runtime validation still uses the resolved schema. */
-  strict: true;
-  data?: TData;
-  onChange?: SchemaFormChangeHandler<TData>;
-}
-
-export type SchemaFormProps<TData = OutputData> = SchemaFormLooseProps | SchemaFormStrictProps<TData>;
 
 export interface SchemaFormValidationError {
   message: string;
