@@ -1,6 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { SchemaForm, type JSONSchema, type SchemaFormValidationMessageContext } from "formhell";
+import { advancedExampleSchema } from "./docs/exampleData";
 
 const colorSchema: JSONSchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -26,6 +28,21 @@ function fieldMessagesFor(container: HTMLElement, labelText: string): string[] {
 
 function summaryMessages(container: HTMLElement): string[] {
   return Array.from(container.querySelectorAll(".raf-form-message-text")).map((node) => node.textContent ?? "");
+}
+
+function ControlledAdvancedExample({ onErrors }: { onErrors: (errors: string[]) => void }) {
+  const [data, setData] = useState<Record<string, unknown>>({});
+
+  return (
+    <SchemaForm
+      schema={advancedExampleSchema}
+      data={data}
+      onChange={(next, errors) => {
+        setData(next as Record<string, unknown>);
+        onErrors(errors.map((error) => error.instancePath ?? ""));
+      }}
+    />
+  );
 }
 
 describe("Validation message display", () => {
@@ -153,5 +170,34 @@ describe("Validation message display", () => {
 
     expect(pointers.length).toBeGreaterThan(0);
     expect(new Set(pointers)).toEqual(new Set(["/color"]));
+  });
+
+  it("clears Advanced Example messages after the tuple data becomes valid", async () => {
+    const emittedErrors: string[][] = [];
+    const user = userEvent.setup();
+    const { container } = render(
+      <ControlledAdvancedExample onErrors={(errors) => emittedErrors.push(errors)} />
+    );
+    await screen.findByText("Access Request");
+
+    await user.selectOptions(container.querySelector("select") as HTMLSelectElement, '"admin"');
+    expect(emittedErrors.at(-1)).toEqual([""]);
+    expect(container.querySelector(".raf-form-messages")).not.toBeNull();
+
+    const categoryLabel = within(container).getByText("Category", { selector: ".raf-field-label" });
+    const categoryInput = (categoryLabel.closest(".raf-field") as HTMLElement).querySelector("input") as HTMLInputElement;
+    await user.type(categoryInput, "hardware");
+
+    expect(emittedErrors.at(-1)).toEqual(["/tags"]);
+    expect(fieldMessagesFor(container, "Tags")).toHaveLength(1);
+    expect(summaryMessages(container)).toHaveLength(1);
+
+    const priorityLabel = within(container).getByText("Priority", { selector: ".raf-field-label" });
+    const priorityInput = (priorityLabel.closest(".raf-field") as HTMLElement).querySelector("input") as HTMLInputElement;
+    await user.type(priorityInput, "1");
+
+    expect(emittedErrors.at(-1)).toEqual([]);
+    expect(fieldMessagesFor(container, "Tags")).toHaveLength(0);
+    expect(container.querySelector(".raf-form-messages")).toBeNull();
   });
 });

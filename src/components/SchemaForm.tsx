@@ -16,7 +16,6 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
   const [resolvedSchema, setResolvedSchema] = useState<JSONSchema | null>(null);
   const [resolutionError, setResolutionError] = useState<Error | null>(null);
   const [isWaitingForPeerSchemas, setIsWaitingForPeerSchemas] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<SchemaFormValidationError[]>([]);
   const previousValuesRef = useRef(new Map<string, unknown>());
   const showFieldMessages = options?.showFieldValidationMessages !== false;
   const showFormMessages = options?.showFormValidationMessages !== false;
@@ -92,6 +91,10 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
   }, [data, options?.defaults, resolvedSchema]);
 
   const [formData, setFormData] = useState<OutputData>(initialData);
+  const validationErrors = useMemo(
+    () => (resolvedSchema ? getDataValidationErrors(formData, resolvedSchema) : []),
+    [formData, resolvedSchema]
+  );
 
   useEffect(() => {
     if (!resolvedSchema) {
@@ -99,9 +102,8 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
     }
 
     setFormData(initialData);
-    const validationErrors = getDataValidationErrors(initialData, resolvedSchema);
-    setValidationErrors(validationErrors);
-    onChangeRef.current?.(initialData, validationErrors, "", undefined, initialData);
+    const initialValidationErrors = getDataValidationErrors(initialData, resolvedSchema);
+    onChangeRef.current?.(initialData, initialValidationErrors, "", undefined, initialData);
   }, [initialData, resolvedSchema]);
 
   const handleFieldChange = (pointer: string, next: unknown) => {
@@ -111,12 +113,11 @@ export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, d
 
     const previousValue = getValueAtPointer(formData, pointer);
     const updated = setValueAtPointer(formData, pointer, next) as OutputData;
-    const validationErrors = getDataValidationErrors(updated, resolvedSchema);
+    const nextValidationErrors = getDataValidationErrors(updated, resolvedSchema);
 
     previousValuesRef.current.set(pointer, previousValue);
     setFormData(updated);
-    setValidationErrors(validationErrors);
-    onChangeRef.current?.(updated, validationErrors, pointer, previousValue, next);
+    onChangeRef.current?.(updated, nextValidationErrors, pointer, previousValue, next);
   };
 
   const validationMessages = useMemo(
