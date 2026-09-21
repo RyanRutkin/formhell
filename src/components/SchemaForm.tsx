@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { SchemaFormProps, SchemaFormValidationError } from "../types/components";
+import type {
+  SchemaFormChangeHandler,
+  SchemaFormProps,
+  SchemaFormValidationError
+} from "../types/components";
 import type { JSONSchema, OutputData, PeerSchemasInput } from "../types/schema";
 import { useFormHellLocale } from "../i18n/LocaleProvider";
 import { createDefaultValueFromSchema } from "../utils/defaultData";
@@ -10,7 +14,9 @@ import { buildValidationMessages } from "../utils/validationMessages";
 import { FieldValidationMessagesProvider } from "./FieldValidationMessages";
 import { SchemaFieldRenderer } from "./SchemaFieldRenderer";
 
-export function SchemaForm({ schema, peerSchemas, getSchema, widgets, options, data, onChange }: SchemaFormProps) {
+export function SchemaForm<TData = OutputData>(props: SchemaFormProps<TData>) {
+  const { schema, peerSchemas, getSchema, widgets, options, data } = props;
+  const onChange = props.onChange as SchemaFormChangeHandler<OutputData> | undefined;
   const { formatMessage, direction } = useFormHellLocale();
   const onChangeRef = useRef(onChange);
   const [resolvedSchema, setResolvedSchema] = useState<JSONSchema | null>(null);

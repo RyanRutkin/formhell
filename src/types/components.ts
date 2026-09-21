@@ -133,21 +133,23 @@ export interface SchemaFormVirtualizationArrayOptions {
     virtualizer?: FormHellVirtualizerFactory;
 }
 
-export interface SchemaFormProps {
+export interface SchemaFormProps<TData = OutputData> {
   schema: JSONSchema;
   peerSchemas?: PeerSchemasInput;
   getSchema?: (requestedSchema: string) => Promise<JSONSchema>;
   widgets?: SchemaFormWidgets;
   options?: SchemaFormOptions;
-  data?: OutputData;
-  onChange?: (
-    data: OutputData,
-    validationErrors: SchemaFormValidationError[],
-    fieldPointer: string,
-    prev: any,
-    next: any
-  ) => void;
+  data?: TData;
+  onChange?: SchemaFormChangeHandler<TData>;
 }
+
+export type SchemaFormChangeHandler<TData> = (
+  data: TData,
+  validationErrors: SchemaFormValidationError[],
+  fieldPointer: string,
+  prev: unknown,
+  next: unknown
+) => void;
 
 export interface SchemaFormValidationError {
   message: string;
