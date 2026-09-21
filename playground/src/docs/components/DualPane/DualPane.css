@@ -1,0 +1,31 @@
+.dual-pane {
+    display: flex;
+    flex-direction: column;
+    --raf-color-border: var(--raf-color-border, var(--mui-palette-divider, #d9dce1));
+    --raf-color-border-focus: var(--raf-color-border-focus, var(--mui-palette-primary-main, #1976d2));
+}
+.dual-pane-toggle-container {
+    display: flex;
+    flex-shrink: 0;
+}
+.dual-pane-content-container {
+    flex: 1;
+}
+.dual-pane-content {
+    display: none;
+}
+.dual-pane-content.active {
+    display: block;
+}
+
+
+.dual-pane-toggle-container .raf-button-primary {
+  background: var(--raf-mui-primary);
+  color: #ffffff;
+  border: 0.0625rem solid var(--raf-color-border-focus);
+}
+.dual-pane-toggle-container .raf-button-secondary {
+  background: var(--raf-mui-secondary);
+  color: #7a7979;
+  border: 0.0625rem solid var(--raf-color-border);
+}
