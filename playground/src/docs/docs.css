@@ -2,6 +2,10 @@
   color-scheme: dark;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 html,
 body {
   height: 100%;
@@ -330,7 +334,7 @@ body {
   border-radius: 0.75rem;
   background: var(--docs-surface);
   margin: 0 auto 2rem;
-  max-width: 52rem;
+  max-width: min(52rem, 100%);
   overflow: hidden;
 }
 
@@ -384,11 +388,13 @@ body {
 .docs-section {
   display: flex;
   min-height: calc(100vh - 2em);
+  max-width: 100%;
 }
 
 .docs-section-content {
   flex: 1;
   padding: 0 2em;
+  width: 100%;
 }
 
 .doc-section-big-boy {
@@ -428,6 +434,11 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
+}
+
+.docs-builder-grid div {
+  max-width: 100%;
+  min-width: 0;
 }
 
 .docs-async-ref-demo .raf-button {
