@@ -530,6 +530,12 @@ export function SchemaFormPage() {
                             builds initial data from the schema and the active defaults strategy.
                         </li>
                         <li>
+                            <strong><code>strict?: true</code></strong> &mdash; opts into the generic data contract. Supply a type generated
+                            at build time and both <code>data</code> and the first <code>onChange</code> argument use that type:
+                            <code> &lt;SchemaForm&lt;AccessRequest&gt; strict ... /&gt;</code>. Runtime validation still uses the resolved
+                            JSON Schema.
+                        </li>
+                        <li>
                             <strong><code>options?.defaults: &quot;all&quot; | &quot;required-only&quot;</code></strong> &mdash; controls how
                             aggressively default values are generated for properties that don&rsquo;t already have a value.
                             <code> &quot;all&quot;</code> populates every property that has a usable default or an inferable empty value for
@@ -572,6 +578,34 @@ export function SchemaFormPage() {
                             field that changed, and its previous/next values.
                         </li>
                     </ul>
+
+                                        <h3>Strict data typing</h3>
+                                        <p>
+                                                TypeScript types do not exist at runtime, so <code>json-schema-to-typescript</code> must generate the data type
+                                                before the application is compiled. Its <code>compile</code> API returns TypeScript declaration text, not a
+                                                runtime converter. Keep that Node-only generation step outside <code>SchemaForm</code>, import the generated
+                                                type, and opt in with <code>strict</code>:
+                                        </p>
+                                        <CodeBlock
+                                                code={`import type { AccessRequest } from "./generated/access-request";
+
+<SchemaForm<AccessRequest>
+    strict
+    schema={accessRequestSchema}
+    data={formData}
+    onChange={(data) => {
+        // data is AccessRequest
+        setFormData(data);
+    }}
+/>;`}
+                                        />
+                                        <p>
+                                                FormHell does not invoke <code>json-schema-to-typescript</code> in the browser and does not pass a
+                                                <code> cwd</code> to it. Resolve external references through FormHell&rsquo;s <code>peerSchemas</code> or
+                                                asynchronous <code>getSchema</code> pipeline; generate from an already resolved schema and disable the
+                                                generator&rsquo;s file/HTTP resolvers if your build tooling invokes <code>compile</code>. Any compiler options
+                                                belong to that build-time call, where they are passed directly to <code>json-schema-to-typescript</code>.
+                                        </p>
                 </div>
                 {isBigBoy && (
                     <div className="doc-section-big-boy">
