@@ -572,6 +572,33 @@ export function SchemaFormPage() {
                             field that changed, and its previous/next values.
                         </li>
                     </ul>
+
+                                        <h3>Strict data typing</h3>
+                                        <p>
+                                            <code>SchemaForm</code> is generic. Pass your data type to type the controlled <code>data</code> prop and
+                                            the data returned to <code>onChange</code>. When no generic is supplied, the data type defaults to
+                                            <code> unknown</code>:
+                                        </p>
+                                        <CodeBlock
+                                                code={`type AccessRequest = {
+    role?: "admin" | "editor" | "viewer";
+    tags?: [string, number];
+};
+
+<SchemaForm<AccessRequest>
+    schema={accessRequestSchema}
+    data={formData}
+    onChange={(data) => {
+        // data is AccessRequest
+        setFormData(data);
+    }}
+/>;`}
+                                        />
+                                        <p>
+                                                The generic is a TypeScript compile-time contract; FormHell does not derive it from or compare it with
+                                                the JSON Schema. Consumers are responsible for keeping the supplied TypeScript type and schema in sync.
+                                                Runtime validation always follows the resolved JSON Schema.
+                                        </p>
                 </div>
                 {isBigBoy && (
                     <div className="doc-section-big-boy">
