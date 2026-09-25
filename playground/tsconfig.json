@@ -1,14 +1,15 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
     "target": "ES2020",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "vitest/globals", "node"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "paths": {
       "formhell": ["../src/index.ts"],
-      "formhell/*": ["../src/*"]
+      "formhell/*": ["../src/*"],
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"]
     },
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,

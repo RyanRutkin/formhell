@@ -52,6 +52,33 @@ export function createDefaultValueFromSchema(
   }
 }
 
+// Plain objects merge recursively; any other defined data value (arrays included) replaces the default.
+export function mergeDefaultsWithData(defaults: unknown, data: unknown): unknown {
+  if (data === undefined) {
+    return defaults;
+  }
+
+  if (!isPlainObject(defaults) || !isPlainObject(data)) {
+    return data;
+  }
+
+  const result: Record<string, unknown> = { ...defaults };
+  for (const [key, value] of Object.entries(data)) {
+    // defineProperty keeps a "__proto__" data key as an own property instead of swapping the prototype.
+    Object.defineProperty(result, key, {
+      value: mergeDefaultsWithData(Object.hasOwn(defaults, key) ? defaults[key] : undefined, value),
+      enumerable: true,
+      writable: true,
+      configurable: true
+    });
+  }
+  return result;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function getPrimaryType(schema: JSONSchema): string | undefined {
   if (Array.isArray(schema.type)) {
     return schema.type[0];

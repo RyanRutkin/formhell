@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type JSX } from "react";
 import { DOCS_NAV } from "./nav";
 import { useDocsRoute } from "./useDocsRoute";
 import { DocsThemeProvider, useDocsTheme } from "./DocsThemeContext";
