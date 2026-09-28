@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type JSX } from "react";
 import { DOCS_NAV } from "./nav";
 import { useDocsRoute } from "./useDocsRoute";
 import { DocsThemeProvider, useDocsTheme } from "./DocsThemeContext";
+import { QuickStartPage } from "./pages/QuickStartPage";
 import { AboutPage } from "./pages/AboutPage";
 import { InstallationPage } from "./pages/InstallationPage";
 import { SchemaFormPage } from "./pages/SchemaFormPage";
@@ -11,6 +12,7 @@ import { ThemingPage } from "./pages/ThemingPage";
 import "./docs.css";
 
 const PAGE_COMPONENTS: Record<string, () => JSX.Element> = {
+  "quick-start": QuickStartPage,
   about: AboutPage,
   installation: InstallationPage,
   "schema-form": SchemaFormPage,
@@ -102,10 +104,10 @@ function DocsShell() {
         </button>
         <a
           className="docs-brand"
-          href="?page=about"
+          href="?page=quick-start"
           onClick={(event) => {
             event.preventDefault();
-            navigateAndCloseMobileNav("about");
+            navigateAndCloseMobileNav("quick-start");
           }}
         >
           <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="docs-brand-icon" />

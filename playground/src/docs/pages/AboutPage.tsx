@@ -3,24 +3,39 @@ export function AboutPage() {
     <article className="docs-article">
       <h1>About FormHell</h1>
       <p>
-        FormHell is a robust, dependency-light JSON Schema form library for React. It renders data-entry forms
-        directly from a JSON Schema document, and it ships with a visual <code>SchemaBuilder</code> for authoring
-        those schemas without hand-writing raw JSON.
+        FormHell takes a JSON Schema and turns it into a form, designed to have as little overhead as possible 
+        with all the optional capabilites I think you'll need. <br/>We're talking full support for every JSON Schema Draft 2020-12 keyword, 
+        full support for deeply nested schemas, asynchronous <code>$ref</code> resolution, actual support for <code>$defs</code>, default 
+        generation that actually works tuple arrays (unlike the other libraries), virtualization, localization, theming, 
+        built-in widgets for automatically handling every type of JSON Schema field (even a toggle for unions and tuples), 
+        and probably something else I forgot to list.
+      </p>
+      <p>
+        And yes, I'm going to keep supporting this project for many years to come. Software's been my love for a long time and I never let my public 
+        projects grow stale, especially ones that are being used in enterprise applications (yes, FormHell already is).<br/>Feel free to come collaborate with me on the repo!
       </p>
 
       <h2>Why FormHell Exists</h2>
       <p>
-        FormHell was written out of JSON Schema fatigue. Many popular React JSON Schema form libraries feel great
-        for a small demo, then become awkward once schemas grow: deep <code>$ref</code> chains, conditional
-        keywords like <code>if</code>/<code>then</code>/<code>else</code>, and default-value generation are the
-        first things to break down. Projects built on those libraries tend to work fine for a stakeholder demo, and
-        then produce subtly wrong data a year later &mdash; arrays with null entries, stray
-        &ldquo;[object Object]&rdquo; strings, or defaults that silently disagree with the schema.
+        FormHell was written because I couldn't keep skirting around the bugs of the "industry-standard" JSON Schema Form libraries with shotty kludges.
+        <br/>It doesn't look good on your team when your app keeps breaking due to issues that some library refuses to address (looking at you react-json-schema-forms).
+        <br/>I needed a JSON Schema form library that could handle the most complex keywords (if/then, tuple arrays, deep $ref chains, actually generating the right defaults without having to enable "experimental" features ) without breaking.
+        <br/>After battling a couple different libraries over the course of two years, I bit the bullet and built my own from scratch.
+        <br/>This thing is working great for my team, and it handles those gross schemas designed by my App Dev team and the Design team perfectly.
+        <br/>Thankfully all that pain helped me whip up a whole big test suite (with the help of Copilot, because who likes writing tests) to make sure it doesn't fail like all the other libraries did.
+      </p>
+
+      <h2>What's with the name?</h2>
+      <p>
+        Well, the project was originally called "react-autological-forms". 
+        <br/>I've been working on another project called Autological for the last 12 years, and I thought "react-af" would be funny. Unfortunately, a "react as f**k" library already exist, there's a few "react-af" libs out there, and there's even a study done called REACT-AF. I couldn't use that because no one would find the library when searching for it. That's why a lot of the CSS classes are still prefixed with "raf-".
       </p>
       <p>
-        FormHell exists to close that gap. It targets both ends of the spectrum: robust enough to keep working
-        correctly as schemas get more advanced, and straightforward enough that a simple schema still &ldquo;just
-        works&rdquo; without extra setup.
+        I spent a couple nights pondering on a new name. I had been working on this library for about five weeks every night 
+        and, though I was excited to see it come to life, I was discouraged that I couldn't use the name I wanted. 
+        <br/>I was listening to my favorite song <a aria-label="FormHell's theme song" target="_blank" href="https://youtu.be/yHCaH8nxE8U?si=q-C_ZlOaHEop3OVB" rel="noopener noreferrer">"From Hell" by Hellripper</a> on repeat when the name came to me... and now I hear it sung as "FormHell" every time.
+        <br/>I guess that's the official theme song for the library. I went back and forth on that name for a bit, but by that point it stuck. 
+        <br/>FormHell it is then.
       </p>
 
       <h2>What FormHell Provides</h2>
