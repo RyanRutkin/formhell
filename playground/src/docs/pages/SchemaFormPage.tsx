@@ -938,6 +938,28 @@ const virtualizer: FormHellVirtualizerFactory = {
                     <CodeBlock
                                                 code={`import { SchemaForm, SchemaFormString, type FieldComponentProps } from "formhell";
 
+function SpecialStringField({ label, required, value, disabled, controls, onChange }: FieldComponentProps<string>) {
+    return (
+        <div className="custom-field">
+            <div className="custom-field-label-row">
+                <label className="custom-field-label">
+                    {label}
+                    {required ? " *" : ""}
+                </label>
+                {controls}
+            </div>
+            <input
+                className="raf-input"
+                type="text"
+                value={value ?? ""}
+                disabled={disabled}
+                placeholder="Enter a special value"
+                onChange={(event) => onChange(event.target.value)}
+            />
+        </div>
+    );
+}
+
 function ConditionalStringWidget(props: FieldComponentProps<string>) {
     if (props.schema.format === "special") {
         return <SpecialStringField {...props} />;
