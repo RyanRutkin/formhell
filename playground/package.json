@@ -9,8 +9,8 @@
     "build": "vite build",
     "check:imports": "vite build --logLevel error --emptyOutDir false",
     "preview": "vite preview",
-    "test": "vitest run"
-    ,"benchmark:virtualization": "vitest run src/virtualization.baseline.test.tsx --reporter=verbose"
+    "test": "vitest run",
+    "benchmark:virtualization": "vitest run src/virtualization.baseline.test.tsx --reporter=verbose"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -26,6 +26,7 @@
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^26.6.2",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.2",

@@ -915,24 +915,42 @@ const virtualizer: FormHellVirtualizerFactory = {
                         The <code>widgets</code> prop overrides rendering in two ways that can be combined: by JSON Schema type
                         (<code>widgets.String</code>, <code>widgets.Select</code>, <code>widgets.Boolean</code>,
                         <code> widgets.Number</code>, <code>widgets.Integer</code>, <code>widgets.Null</code>,
-                        <code> widgets.Object</code>, <code>widgets.Array</code>), and by exact schema pointer using the pointer
-                        itself as the object key (for example <code>&quot;/properties/firstName&quot;</code>). <code>Select</code> is
+                        <code> widgets.Object</code>, <code>widgets.Array</code>), and by schema pointer using the pointer
+                        itself as the object key (for example <code>&quot;/properties/firstName&quot;</code> or
+                        <code>&quot;/properties/*&quot;</code> for any direct property). A <code>*</code> matches exactly one pointer
+                        token. <code>Select</code> is
                         used for string/number/integer fields that have an <code>enum</code> or a <code>oneOf</code> of
                         <code> const</code> values; every other primitive type maps to its matching type key.
                     </p>
                     <p>
+                        The built-in widget primitives are exported for conditional delegation:
+                        <code>SchemaFormString</code>, <code>SchemaFormSelect</code>, <code>SchemaFormBoolean</code>,
+                        <code>SchemaFormNumber</code>, <code>SchemaFormInteger</code>, <code>SchemaFormNull</code>,
+                        <code>SchemaFormObject</code>, and <code>SchemaFormArray</code>.
+                    </p>
+                    <p>
                         Precedence when more than one override could apply to the same field: an exact pointer override wins first,
-                        then a type override, then the built-in widget for that type.
+                        then the most-specific matching wildcard pointer, then a type override, then the built-in widget for that type.
                     </p>
                     {!isBigBoy && (
                         <CustomWidgetsDemo />
                     )}
                     <CodeBlock
-                        code={`<SchemaForm
+                                                code={`import { SchemaForm, SchemaFormString, type FieldComponentProps } from "formhell";
+
+function ConditionalStringWidget(props: FieldComponentProps<string>) {
+    if (props.schema.format === "special") {
+        return <SpecialStringField {...props} />;
+    }
+
+    return <SchemaFormString {...props} />;
+}
+
+<SchemaForm
   schema={schema}
   widgets={{
-    String: FancyStringField,
-    "/properties/displayName": NameOnlyField
+        String: ConditionalStringWidget,
+        "/properties/*": SharedPropertyField
   }}
 />`}
                     />

@@ -10,6 +10,7 @@ import type {
 } from "../types/components";
 import type { JSONSchema, JSONSchemaType } from "../types/schema";
 import { AJV_SUPPORTED_FORMATS, createAjvForSchema } from "../utils/schemaValidation";
+import { deepEqual } from "../utils/deepEqual";
 
 type SchemaCombinationKey = "allOf" | "anyOf" | "oneOf";
 type SchemaConditionalKey = "if" | "then" | "else";
@@ -1499,7 +1500,7 @@ function ObjectSchemaAdvancedEditor({ schema, onChange }: { schema: JSONSchema; 
                       return;
                     }
 
-                    if (Object.prototype.hasOwnProperty.call(nextEntries, normalized)) {
+                    if (Object.hasOwn(nextEntries, normalized)) {
                       return;
                     }
 
@@ -2087,7 +2088,7 @@ function SchemaMapEditor({
                 }
 
                 const nextMap = { ...schemaMap };
-                if (Object.prototype.hasOwnProperty.call(nextMap, normalized)) {
+                if (Object.hasOwn(nextMap, normalized)) {
                   return;
                 }
 
@@ -3385,12 +3386,12 @@ function createUniquePropertyName(properties: Record<string, JSONSchema>, baseNa
 }
 
 function createUniqueEntryName(entries: Record<string, unknown>, baseName: string): string {
-  if (!Object.prototype.hasOwnProperty.call(entries, baseName)) {
+  if (!Object.hasOwn(entries, baseName)) {
     return baseName;
   }
 
   let index = 1;
-  while (Object.prototype.hasOwnProperty.call(entries, `${baseName}${index}`)) {
+  while (Object.hasOwn(entries, `${baseName}${index}`)) {
     index += 1;
   }
   return `${baseName}${index}`;
@@ -3634,7 +3635,7 @@ function validateSchemaDefinition(schema: JSONSchema): SchemaBuilderValidationEr
 function validateConstAndEnumConsistency(schema: JSONSchema, schemaPointer = ""): SchemaBuilderValidationError[] {
   const errors: SchemaBuilderValidationError[] = [];
   const schemaTypes = getSchemaTypes(schema);
-  const hasConst = Object.prototype.hasOwnProperty.call(schema, "const");
+  const hasConst = Object.hasOwn(schema, "const");
 
   if (hasConst && !matchesAnySchemaType(schema.const, schemaTypes)) {
     errors.push({
@@ -3799,37 +3800,6 @@ function matchesSchemaType(value: unknown, schemaType: JSONSchemaType): boolean 
   }
 
   return isObject(value);
-}
-
-function deepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) {
-    return true;
-  }
-
-  if (typeof a !== typeof b) {
-    return false;
-  }
-
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) {
-      return false;
-    }
-
-    return a.every((entry, index) => deepEqual(entry, b[index]));
-  }
-
-  if (isObject(a) && isObject(b)) {
-    const keysA = Object.keys(a);
-    const keysB = Object.keys(b);
-
-    if (keysA.length !== keysB.length) {
-      return false;
-    }
-
-    return keysA.every((key) => deepEqual(a[key], b[key]));
-  }
-
-  return false;
 }
 
 function escapeJsonPointerToken(value: string): string {

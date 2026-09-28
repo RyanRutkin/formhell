@@ -6,7 +6,8 @@ import type {
 } from "../types/components";
 import type { JSONSchema, OutputData, PeerSchemasInput } from "../types/schema";
 import { useFormHellLocale } from "../i18n/LocaleProvider";
-import { createDefaultValueFromSchema } from "../utils/defaultData";
+import { createDefaultValueFromSchema, mergeDefaultsWithData } from "../utils/defaultData";
+import { deepEqual } from "../utils/deepEqual";
 import { getValueAtPointer, setValueAtPointer } from "../utils/jsonPointer";
 import { MissingPeerSchemaError, resolveSchemaRefs } from "../utils/refResolver";
 import { collectDataValidationIssues, validatePeerSchemasOrThrow, validateSchemaOrThrow } from "../utils/schemaValidation";
@@ -81,36 +82,41 @@ export function SchemaForm<TData = OutputData>(props: SchemaFormProps<TData>) {
     };
   }, [schema, peerSchemas, getSchema]);
 
-  const initialData = useMemo(() => {
-    if (!resolvedSchema) {
-      return data ?? {};
-    }
+  const defaultsMode = options?.defaults;
+  const [formData, setFormData] = useState<OutputData>(() => data ?? {});
+  const formDataRef = useRef(formData);
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
-    if (data !== undefined) {
-      return data;
-    }
-
-    const fallback = createDefaultValueFromSchema(resolvedSchema, {
-      defaults: options?.defaults ?? "all"
-    });
-    return fallback ?? {};
-  }, [data, options?.defaults, resolvedSchema]);
-
-  const [formData, setFormData] = useState<OutputData>(initialData);
   const validationErrors = useMemo(
     () => (resolvedSchema ? getDataValidationErrors(formData, resolvedSchema) : []),
     [formData, resolvedSchema]
   );
 
+  // Initialization: runs when the schema (re)resolves; the only lifecycle path besides edits that emits onChange.
   useEffect(() => {
     if (!resolvedSchema) {
       return;
     }
 
+    const defaults = createDefaultValueFromSchema(resolvedSchema, { defaults: defaultsMode ?? "all" });
+    const initialData = (mergeDefaultsWithData(defaults, dataRef.current) ?? {}) as OutputData;
+    formDataRef.current = initialData;
     setFormData(initialData);
     const initialValidationErrors = getDataValidationErrors(initialData, resolvedSchema);
     onChangeRef.current?.(initialData, initialValidationErrors, "", undefined, initialData);
-  }, [initialData, resolvedSchema]);
+  }, [defaultsMode, resolvedSchema]);
+
+  // External data is accepted as-is (no defaults) and never echoed back through onChange.
+  useEffect(() => {
+    if (!resolvedSchema || data === undefined || deepEqual(data, formDataRef.current)) {
+      return;
+    }
+
+    formDataRef.current = data;
+    setFormData(data);
+    // resolvedSchema is intentionally omitted: schema changes are handled by the initialization effect.
+  }, [data]);
 
   const handleFieldChange = (pointer: string, next: unknown) => {
     if (!resolvedSchema) {
@@ -122,6 +128,7 @@ export function SchemaForm<TData = OutputData>(props: SchemaFormProps<TData>) {
     const nextValidationErrors = getDataValidationErrors(updated, resolvedSchema);
 
     previousValuesRef.current.set(pointer, previousValue);
+    formDataRef.current = updated;
     setFormData(updated);
     onChangeRef.current?.(updated, nextValidationErrors, pointer, previousValue, next);
   };

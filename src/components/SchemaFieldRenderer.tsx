@@ -11,6 +11,7 @@ import type {
   FieldComponentProps,
   SchemaFormArrayProps,
   SchemaFormObjectProps,
+  SchemaPointerWidget,
   SchemaFormValidationError,
   SchemaFormVirtualizationOptions,
   SchemaFormWidgets
@@ -20,7 +21,7 @@ import { useFormHellLocale } from "../i18n/LocaleProvider";
 import { createDefaultValueFromSchema } from "../utils/defaultData";
 import { resolveEffectiveSchema, switchUnionBranchValue } from "../utils/effectiveSchema";
 import { isPropertyNameAllowed, resolveDynamicProperties, resolveSchemaForPropertyName } from "../utils/dynamicProperties";
-import { joinPointer } from "../utils/jsonPointer";
+import { joinPointer, toPointerTokens } from "../utils/jsonPointer";
 import { resolveArrayVirtualizationOptions } from "../utils/virtualization";
 
 interface SchemaFieldRendererProps {
@@ -64,7 +65,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
   );
   const schema = effective.schema;
   const unions = effective.unions;
-  const hasConstValue = Object.prototype.hasOwnProperty.call(schema, "const");
+  const hasConstValue = Object.hasOwn(schema, "const");
   const lockedValue = hasConstValue ? schema.const : value;
   const isConstLocked = hasConstValue;
   const schemaTypes = resolveTypes(schema);
@@ -568,12 +569,34 @@ function getSchemaPointerWidget<TProps>(
     return undefined;
   }
 
-  const candidate = widgets[schemaPointer];
-  if (!candidate) {
-    return undefined;
+  const exact = widgets[schemaPointer];
+  if (exact) {
+    return exact as ComponentType<TProps>;
   }
 
-  return candidate as ComponentType<TProps>;
+  const pointerTokens = toPointerTokens(schemaPointer);
+  let best: { score: number; widget: SchemaPointerWidget } | undefined;
+
+  for (const [pattern, widget] of Object.entries(widgets)) {
+    if (!widget || !pattern.includes("*")) {
+      continue;
+    }
+
+    const patternTokens = toPointerTokens(pattern);
+    if (
+      patternTokens.length !== pointerTokens.length ||
+      !patternTokens.every((token, index) => token === "*" || token === pointerTokens[index])
+    ) {
+      continue;
+    }
+
+    const score = patternTokens.filter((token) => token !== "*").length;
+    if (!best || score > best.score) {
+      best = { score, widget };
+    }
+  }
+
+  return best?.widget as ComponentType<TProps> | undefined;
 }
 
 function resolveType(schema: JSONSchema): JSONSchemaType {
