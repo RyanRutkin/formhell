@@ -1182,8 +1182,8 @@ describe("Playground regression guards", () => {
 
     const fieldSchema = previewSchema.properties?.field;
     expect(fieldSchema).toBeDefined();
-    expect(Object.prototype.hasOwnProperty.call(fieldSchema ?? {}, "properties")).toBe(false);
-    expect(Object.prototype.hasOwnProperty.call(fieldSchema ?? {}, "required")).toBe(false);
+    expect(Object.hasOwn(fieldSchema ?? {}, "properties")).toBe(false);
+    expect(Object.hasOwn(fieldSchema ?? {}, "required")).toBe(false);
   });
 
   it("reports schema validation error when minProperties exceeds maxProperties", async () => {

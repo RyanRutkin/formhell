@@ -145,7 +145,7 @@ function interpolate(template: string, values?: FormHellMessageValues): string {
   }
 
   return template.replace(/\{(\w+)\}/g, (match, key: string) =>
-    Object.prototype.hasOwnProperty.call(values, key) ? String(values[key]) : match
+    Object.hasOwn(values, key) ? String(values[key]) : match
   );
 }
 

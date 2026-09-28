@@ -64,7 +64,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
   );
   const schema = effective.schema;
   const unions = effective.unions;
-  const hasConstValue = Object.prototype.hasOwnProperty.call(schema, "const");
+  const hasConstValue = Object.hasOwn(schema, "const");
   const lockedValue = hasConstValue ? schema.const : value;
   const isConstLocked = hasConstValue;
   const schemaTypes = resolveTypes(schema);
