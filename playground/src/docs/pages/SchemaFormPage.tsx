@@ -190,9 +190,7 @@ function CustomWidgetsDemo() {
                         <SchemaForm
                             schema={customWidgetSchema}
                             widgets={{
-                                "/properties/displayName": (props) => (
-                                    <UppercaseNameField label={props.label} value={props.value as string} onChange={props.onChange} />
-                                )
+                                "/properties/displayName": UppercaseNameField
                             }}
                             data={formData} onChange={(data) => setFormData(data as Record<string, any>)}
                         />
