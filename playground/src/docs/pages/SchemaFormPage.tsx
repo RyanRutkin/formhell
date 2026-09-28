@@ -923,6 +923,12 @@ const virtualizer: FormHellVirtualizerFactory = {
                         <code> const</code> values; every other primitive type maps to its matching type key.
                     </p>
                     <p>
+                        The built-in widget primitives are exported for conditional delegation:
+                        <code>SchemaFormString</code>, <code>SchemaFormSelect</code>, <code>SchemaFormBoolean</code>,
+                        <code>SchemaFormNumber</code>, <code>SchemaFormInteger</code>, <code>SchemaFormNull</code>,
+                        <code>SchemaFormObject</code>, and <code>SchemaFormArray</code>.
+                    </p>
+                    <p>
                         Precedence when more than one override could apply to the same field: an exact pointer override wins first,
                         then the most-specific matching wildcard pointer, then a type override, then the built-in widget for that type.
                     </p>
@@ -930,12 +936,21 @@ const virtualizer: FormHellVirtualizerFactory = {
                         <CustomWidgetsDemo />
                     )}
                     <CodeBlock
-                        code={`<SchemaForm
+                                                code={`import { SchemaForm, SchemaFormString, type FieldComponentProps } from "formhell";
+
+function ConditionalStringWidget(props: FieldComponentProps<string>) {
+    if (props.schema.format === "special") {
+        return <SpecialStringField {...props} />;
+    }
+
+    return <SchemaFormString {...props} />;
+}
+
+<SchemaForm
   schema={schema}
   widgets={{
-    String: FancyStringField,
-        "/properties/*": SharedPropertyField,
-    "/properties/displayName": NameOnlyField
+        String: ConditionalStringWidget,
+        "/properties/*": SharedPropertyField
   }}
 />`}
                     />

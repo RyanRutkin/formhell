@@ -3,6 +3,14 @@ import "./styles.css";
 export { SchemaForm } from "./components/SchemaForm";
 export { SchemaBuilder } from "./components/SchemaBuilder";
 export { SchemaBuilderHelper } from "./components/SchemaBuilder";
+export { SchemaFormArray } from "./components/fields/SchemaFormArray";
+export { SchemaFormBoolean } from "./components/fields/SchemaFormBoolean";
+export { SchemaFormInteger } from "./components/fields/SchemaFormInteger";
+export { SchemaFormNull } from "./components/fields/SchemaFormNull";
+export { SchemaFormNumber } from "./components/fields/SchemaFormNumber";
+export { SchemaFormObject } from "./components/fields/SchemaFormObject";
+export { SchemaFormSelect } from "./components/fields/SchemaFormSelect";
+export { SchemaFormString } from "./components/fields/SchemaFormString";
 
 export { FormHellLocaleProvider, useFormHellLocale, resolveDirection } from "./i18n/LocaleProvider";
 export { useFormHellFieldValidationMessages } from "./components/FieldValidationMessages";
