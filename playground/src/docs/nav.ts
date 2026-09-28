@@ -10,7 +10,7 @@ export type DocsNavPage = {
 };
 
 export const DOCS_NAV: DocsNavPage[] = [
-  { id: "about", label: "About" },
+  { id: "quick-start", label: "Quick Start" },
   { id: "installation", label: "Installation" },
   {
     id: "schema-form",
@@ -32,7 +32,8 @@ export const DOCS_NAV: DocsNavPage[] = [
     ]
   },
   { id: "localization", label: "Localization" },
-  { id: "theming", label: "Theming" }
+  { id: "theming", label: "Theming" },
+  { id: "about", label: "About" },
 ];
 
-export const DEFAULT_PAGE_ID = "about";
+export const DEFAULT_PAGE_ID = "quick-start";
