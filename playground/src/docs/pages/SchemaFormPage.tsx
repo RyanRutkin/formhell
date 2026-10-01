@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { SchemaForm, type JSONSchema, type SchemaFormValidationError } from "formhell";
+import { CustomWidgetsExample, customWidgetSchema, initialCustomWidgetData } from "../customWidgetsExample";
 import { ExamplePanel } from "../components/ExamplePanel";
 import { CodeBlock } from "../components/CodeBlock";
 import {
@@ -7,7 +8,6 @@ import {
     asyncRefSchema,
     buildVirtualizationData,
     colorSchema,
-    customWidgetSchema,
     quickStartData,
     quickStartSchema,
     validationErrorData,
@@ -31,15 +31,6 @@ function ValidationErrorList({ errors }: { errors: SchemaFormValidationError[] }
                 </li>
             ))}
         </ul>
-    );
-}
-
-function UppercaseNameField({ label, value, onChange }: { label: string; value: string; onChange: (next: string) => void }) {
-    return (
-        <label className="docs-widget-field">
-            {label} (custom widget, forces uppercase)
-            <input value={(value as string) ?? ""} onChange={(event) => onChange(event.target.value.toUpperCase())} />
-        </label>
     );
 }
 
@@ -179,7 +170,7 @@ function PeerSchemasFormDemo() {
 }
 
 function CustomWidgetsDemo() {
-    const [formData, setFormData] = useState<Record<string, any>>({} as Record<string, any>);
+    const [formData, setFormData] = useState(initialCustomWidgetData);
     const isBigBoy = useMediaQuery(DOCS_MEDIA_QUERIES.bigBoy);
 
     return (
@@ -187,13 +178,7 @@ function CustomWidgetsDemo() {
             <ExamplePanel>
                 <div className="docs-section-example-content">
                     <div className="docs-example-block docs-section-form-wrapper">
-                        <SchemaForm
-                            schema={customWidgetSchema}
-                            widgets={{
-                                "/properties/displayName": UppercaseNameField
-                            }}
-                            data={formData} onChange={(data) => setFormData(data as Record<string, any>)}
-                        />
+                        <CustomWidgetsExample onDataChange={setFormData} />
                     </div>
                     {isBigBoy && (
                         <DualPane
@@ -937,50 +922,89 @@ const virtualizer: FormHellVirtualizerFactory = {
                         Precedence when more than one override could apply to the same field: an exact pointer override wins first,
                         then the most-specific matching wildcard pointer, then a type override, then the built-in widget for that type.
                     </p>
+                    <p>
+                        This example uses <code>String</code> for ordinary string fields and
+                        <code> /properties/tags/prefixItems/*</code> for every index in the string tuple. The wildcard widget
+                        wins over <code>String</code> for both tag fields; <code>note</code> delegates to the built-in string widget.
+                        For homogeneous arrays, use the shared <code>/properties/tags/items</code> schema pointer instead of
+                        an index wildcard.
+                    </p>
                     {!isBigBoy && (
                         <CustomWidgetsDemo />
                     )}
-                    <CodeBlock
-                                                code={`import { SchemaForm, SchemaFormString, type FieldComponentProps } from "formhell";
+                                        <CodeBlock code={`import { useState } from "react";
+import {
+    SchemaForm,
+    SchemaFormString,
+    useFormHellFieldValidationMessages,
+    type FieldComponentProps,
+    type JSONSchema,
+    type SchemaFormWidgets
+} from "formhell";
+import { customWidgetSchema, AccountData, initialCustomWidgetData } from "./customWidgetSchema";
 
-function SpecialStringField({ label, required, value, disabled, controls, onChange }: FieldComponentProps<string>) {
+function FieldMessages({ pointer }: { pointer: string }) {
+    const messages = useFormHellFieldValidationMessages(pointer);
+    return messages.length > 0 ? (
+        <ul className="raf-field-messages" role="alert">
+            {messages.map((message, index) => <li className="raf-field-message" key={index}>{message}</li>)}
+        </ul>
+    ) : null;
+}
+
+function UppercaseStringField({ label, pointer, value, disabled, controls, onChange }: FieldComponentProps<string>) {
     return (
-        <div className="custom-field">
-            <div className="custom-field-label-row">
-                <label className="custom-field-label">
-                    {label}
-                    {required ? " *" : ""}
-                </label>
-                {controls}
-            </div>
-            <input
-                className="raf-input"
-                type="text"
-                value={value ?? ""}
-                disabled={disabled}
-                placeholder="Enter a special value"
-                onChange={(event) => onChange(event.target.value)}
-            />
+        <div className="docs-widget-field">
+            <label>
+                {label} (String widget: uppercase)
+                <input value={value ?? ""} disabled={disabled} onChange={(event) => onChange(event.target.value.toUpperCase())} />
+            </label>
+            {controls}
+            <FieldMessages pointer={pointer} />
         </div>
     );
 }
 
-function ConditionalStringWidget(props: FieldComponentProps<string>) {
-    if (props.schema.format === "special") {
-        return <SpecialStringField {...props} />;
-    }
-
-    return <SchemaFormString {...props} />;
+function StringWidget(props: FieldComponentProps<string>) {
+    return props.schema.title === "Display Name"
+        ? <UppercaseStringField {...props} />
+        : <SchemaFormString {...props} />;
 }
 
-<SchemaForm
-  schema={schema}
-  widgets={{
-        String: ConditionalStringWidget,
-        "/properties/*": SharedPropertyField
-  }}
-/>`}
-                    />
+function TagWidget({ label, pointer, value, disabled, controls, onChange }: FieldComponentProps<string>) {
+    return (
+        <div className="docs-widget-field">
+            <label>
+                {label} (wildcard pointer widget)
+                <input value={value ?? ""} disabled={disabled} onChange={(event) => onChange(event.target.value)} />
+            </label>
+            {controls}
+            <FieldMessages pointer={pointer} />
+        </div>
+    );
+}
+
+export function CustomWidgetsExample({ onDataChange }: { onDataChange?: (data: AccountData) => void }) {
+    const [data, setData] = useState<AccountData>(initialCustomWidgetData);
+    return (
+        <SchemaForm<AccountData>
+            schema={customWidgetSchema}
+            widgets={{
+                String: StringWidget,
+                "/properties/tags/prefixItems/*": TagWidget
+            }}
+            data={data}
+            onChange={(next) => {
+                setData(next);
+                onDataChange?.(next);
+            }}
+        />
+    );
+}`} />
+                    <p>
+                        <code>useFormHellFieldValidationMessages(pointer)</code> reads the formatted schema-validation and
+                        external error messages for this field; built-in widgets render these messages automatically.
+                    </p>
 
                     <h3>What every widget receives (<code>FieldComponentProps</code>)</h3>
                     <ul>
