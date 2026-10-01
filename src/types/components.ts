@@ -140,6 +140,8 @@ export interface SchemaFormProps<TData = OutputData> {
   widgets?: SchemaFormWidgets;
   options?: SchemaFormOptions;
   data?: TData;
+  /** Messages keyed by JSON Pointer into form data; displayed beneath fields without changing validation results. */
+  externalErrors?: Record<string, string[]>;
   onChange?: SchemaFormChangeHandler<TData>;
 }
 
