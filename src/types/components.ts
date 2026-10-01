@@ -13,6 +13,19 @@ export interface FieldComponentProps<TValue = unknown> {
   onChange: (next: TValue) => void;
 }
 
+export interface SchemaFormSelectOptionContext {
+  label: string;
+  value: unknown;
+  schema: JSONSchema;
+  pointer: string;
+}
+
+export type SchemaFormSelectOptionFormatter = (context: SchemaFormSelectOptionContext) => string;
+
+export interface SchemaFormSelectProps extends FieldComponentProps<unknown> {
+  selectOptionFormatter?: SchemaFormSelectOptionFormatter;
+}
+
 export interface SchemaFormObjectProps extends FieldComponentProps<Record<string, unknown>> {
   children: ReactNode;
 }
@@ -79,7 +92,7 @@ export type SchemaPointerWidget = ComponentType<any>;
 export interface SchemaFormWidgets {
   [schemaPointer: string]: SchemaPointerWidget | undefined;
   String?: ComponentType<FieldComponentProps<string>>;
-  Select?: ComponentType<FieldComponentProps<unknown>>;
+  Select?: ComponentType<SchemaFormSelectProps>;
   Boolean?: ComponentType<FieldComponentProps<boolean>>;
   Number?: ComponentType<FieldComponentProps<number | undefined>>;
   Integer?: ComponentType<FieldComponentProps<number | undefined>>;
@@ -105,6 +118,8 @@ export type SchemaFormValidationMessageFormatter = (
 export interface SchemaFormOptions {
   defaults?: "all" | "required-only";
   virtualization?: SchemaFormVirtualizationOptions;
+  /** Changes the visible text of enum options without changing their raw values. */
+  selectOptionFormatter?: SchemaFormSelectOptionFormatter;
   /** Render validation messages beneath the field they relate to. Defaults to `true`. */
   showFieldValidationMessages?: boolean;
   /** Render the aggregated validation messages below the form. Defaults to `true`. */
@@ -140,6 +155,8 @@ export interface SchemaFormProps<TData = OutputData> {
   widgets?: SchemaFormWidgets;
   options?: SchemaFormOptions;
   data?: TData;
+  /** Messages keyed by JSON Pointer into form data; displayed beneath fields without changing validation results. */
+  externalErrors?: Record<string, string[]>;
   onChange?: SchemaFormChangeHandler<TData>;
 }
 

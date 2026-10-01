@@ -16,7 +16,7 @@ import { FieldValidationMessagesProvider } from "./FieldValidationMessages";
 import { SchemaFieldRenderer } from "./SchemaFieldRenderer";
 
 export function SchemaForm<TData = OutputData>(props: SchemaFormProps<TData>) {
-  const { schema, peerSchemas, getSchema, widgets, options, data } = props;
+  const { schema, peerSchemas, getSchema, widgets, options, data, externalErrors } = props;
   const onChange = props.onChange as SchemaFormChangeHandler<OutputData> | undefined;
   const { formatMessage, direction } = useFormHellLocale();
   const onChangeRef = useRef(onChange);
@@ -144,6 +144,19 @@ export function SchemaForm<TData = OutputData>(props: SchemaFormProps<TData>) {
       ),
     [formData, formatValidationMessage, resolvedSchema, validationErrors]
   );
+  const fieldMessages = useMemo(() => {
+    if (!externalErrors) {
+      return validationMessages.byPointer;
+    }
+
+    const byPointer = new Map(validationMessages.byPointer);
+    for (const [pointer, errors] of Object.entries(externalErrors)) {
+      if (errors.length > 0) {
+        byPointer.set(pointer, [...(byPointer.get(pointer) ?? []), ...errors]);
+      }
+    }
+    return byPointer;
+  }, [externalErrors, validationMessages]);
 
   if (resolutionError) {
     throw resolutionError;
@@ -164,7 +177,7 @@ export function SchemaForm<TData = OutputData>(props: SchemaFormProps<TData>) {
 
   return (
     <div className="raf-schema-form" dir={direction === "rtl" ? "rtl" : undefined}>
-      <FieldValidationMessagesProvider byPointer={validationMessages.byPointer} enabled={showFieldMessages}>
+      <FieldValidationMessagesProvider byPointer={fieldMessages} enabled={showFieldMessages}>
         <SchemaFieldRenderer
           schema={resolvedSchema}
           label={resolvedSchema.title ?? formatMessage("form.defaultTitle")}
@@ -174,6 +187,7 @@ export function SchemaForm<TData = OutputData>(props: SchemaFormProps<TData>) {
           value={formData}
           onChange={handleFieldChange}
           widgets={widgets}
+          selectOptionFormatter={options?.selectOptionFormatter}
           virtualization={options?.virtualization}
           validationErrors={validationErrors}
         />

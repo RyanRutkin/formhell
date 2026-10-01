@@ -277,12 +277,15 @@ body {
 
 .docs-content {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
-  padding: 2rem 2.5rem 4rem;
+  padding: 2rem 1rem 4rem;
 }
 
 .docs-article {
   margin: 0 auto;
+  width: 100%;
+  min-width: 0;
 }
 
 .docs-article h1 {
@@ -388,13 +391,14 @@ body {
 .docs-section {
   display: flex;
   min-height: calc(100vh - 2em);
-  max-width: 100%;
+  width: 100%;
+  min-width: 0;
 }
 
 .docs-section-content {
-  flex: 1;
-  padding: 0 2em;
-  width: 100%;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 2em 0 1rem;
 }
 
 .doc-section-big-boy {
@@ -408,7 +412,7 @@ body {
     position: sticky;
     top: 0;
     height: calc(100vh - 9em);
-    padding: 1rem;
+    padding: 1rem 0 1rem 1rem;
   }
 
   .docs-example {

@@ -73,15 +73,6 @@ export const colorSchema: JSONSchema = {
   }
 };
 
-export const customWidgetSchema: JSONSchema = {
-  $schema: "https://json-schema.org/draft/2020-12/schema",
-  title: "Account",
-  type: "object",
-  properties: {
-    displayName: { title: "Display Name", type: "string" }
-  }
-};
-
 export const validationErrorSchema: JSONSchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
   title: "Signup",
