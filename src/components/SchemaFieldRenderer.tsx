@@ -11,6 +11,8 @@ import type {
   FieldComponentProps,
   SchemaFormArrayProps,
   SchemaFormObjectProps,
+  SchemaFormSelectOptionFormatter,
+  SchemaFormSelectProps,
   SchemaPointerWidget,
   SchemaFormValidationError,
   SchemaFormVirtualizationOptions,
@@ -33,6 +35,7 @@ interface SchemaFieldRendererProps {
   value: unknown;
   onChange: (pointer: string, next: unknown) => void;
   widgets?: SchemaFormWidgets;
+  selectOptionFormatter?: SchemaFormSelectOptionFormatter;
   virtualization?: SchemaFormVirtualizationOptions;
   virtualizationDepth?: number;
   validationErrors?: SchemaFormValidationError[];
@@ -49,6 +52,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
     value,
     onChange,
     widgets,
+    selectOptionFormatter,
     virtualization,
     virtualizationDepth = 0,
     validationErrors,
@@ -235,6 +239,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
               value={childValue}
               onChange={onChange}
               widgets={widgets}
+              selectOptionFormatter={selectOptionFormatter}
               virtualization={virtualization}
               virtualizationDepth={virtualizationDepth}
               validationErrors={validationErrors}
@@ -255,6 +260,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
               value={objectValue[propertyName]}
               onChange={onChange}
               widgets={widgets}
+              selectOptionFormatter={selectOptionFormatter}
               virtualization={virtualization}
               virtualizationDepth={virtualizationDepth}
               validationErrors={validationErrors}
@@ -410,6 +416,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
             value={itemValue}
             onChange={onChange}
             widgets={widgets}
+            selectOptionFormatter={selectOptionFormatter}
             virtualization={virtualization}
             virtualizationDepth={virtualizationDepth + 1}
             validationErrors={validationErrors}
@@ -520,7 +527,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
 
   if (hasEnum && (activeType === "string" || hasTypeChoices)) {
     const SelectWidget =
-      getSchemaPointerWidget<FieldComponentProps<unknown>>(widgets, schemaPointer) ?? widgets?.Select ?? SchemaFormSelect;
+      getSchemaPointerWidget<SchemaFormSelectProps>(widgets, schemaPointer) ?? widgets?.Select ?? SchemaFormSelect;
     return (
       <SelectWidget
         label={label}
@@ -528,6 +535,7 @@ export function SchemaFieldRenderer(props: SchemaFieldRendererProps) {
         pointer={pointer}
         schema={schema}
         value={lockedValue}
+        selectOptionFormatter={selectOptionFormatter}
         disabled={isConstLocked}
         controls={fieldControls}
         onChange={(next) => {

@@ -508,6 +508,17 @@ export function SchemaFormPage() {
                     <p>
                         <code>schema</code> (required) is the JSON Schema document to render. Everything else is optional:
                     </p>
+                    <p>
+                        <strong>Schema input lifecycle:</strong> an ordinary parent re-render can re-render <code>SchemaForm</code>
+                        without resetting it. Changing the reference of <code>schema</code>, <code>peerSchemas</code>, or
+                        <code> getSchema</code> restarts schema resolution; once resolved, the form re-initializes with defaults
+                        and the current <code>data</code>, then calls <code>onChange</code>. Changing the value of
+                        <code> options.defaults</code> also re-initializes and calls <code>onChange</code>, but does not restart
+                        schema resolution. Keep schema inputs referentially stable across ordinary parent renders; avoid creating
+                        new schema objects, peer-schema arrays, or <code>getSchema</code> functions inline on each render.
+                        Other <code>options</code> changes, such as <code>selectOptionFormatter</code>, can update what is
+                        displayed without re-initializing the form.
+                    </p>
                     <ul>
                         <li>
                             <strong><code>data?: OutputData</code></strong> &mdash; controlled data. When omitted, <code>SchemaForm</code>
@@ -523,7 +534,10 @@ export function SchemaFormPage() {
                         <li>
                             <strong><code>peerSchemas?: JSONSchema[] | Record&lt;string, JSONSchema&gt;</code></strong> &mdash; external
                             schema documents available for <code>$ref</code> resolution, keyed by their own <code>$id</code> when passed as
-                            an array, or by an explicit key when passed as a record.
+                            an array, or by an explicit key when passed as a record. Supply the schemas you already have at
+                            initialization and keep the collection reference stable. Do not populate or replace
+                            <code> peerSchemas</code> after mount to deliver asynchronously fetched references; use a stable
+                            <code> getSchema</code> callback for missing documents instead.
                         </li>
                         <li>
                             <strong><code>options?.showFieldValidationMessages: boolean</code></strong> &mdash; renders validation
@@ -550,6 +564,14 @@ export function SchemaFormPage() {
                             and the summary is the aggregate of its results.
                         </li>
                         <li>
+                            <strong><code>options?.selectOptionFormatter: ({'{ label, value, schema, pointer }'}) =&gt; string</code></strong>
+                            &mdash; changes the visible label of each enum option. <code>label</code> is its current text,
+                            <code> value</code> is the raw enum value, <code>schema</code> is the resolved field schema, and
+                            <code> pointer</code> is its data JSON Pointer. Return <code>label</code> to keep the default or
+                            <code> &quot;&quot;</code> for an intentionally blank label. Selection still emits the raw
+                            enum value, not the formatted text.
+                        </li>
+                        <li>
                             <strong><code>getSchema?: (requestedSchema: string) =&gt; Promise&lt;JSONSchema&gt;</code></strong> &mdash;
                             asynchronous fallback invoked only when a <code>$ref</code> can&rsquo;t be resolved from <code>peerSchemas</code>.
                         </li>
@@ -563,6 +585,14 @@ export function SchemaFormPage() {
                             field that changed, and its previous/next values.
                         </li>
                     </ul>
+
+                                        <CodeBlock code={`<SchemaForm
+    schema={schema}
+    options={{
+        selectOptionFormatter: ({ label, pointer }) =>
+            pointer === "/role" ? label.toUpperCase() : label
+    }}
+/>`} />
 
                                         <h3>Strict data typing</h3>
                                         <p>
@@ -832,15 +862,17 @@ const virtualizer: FormHellVirtualizerFactory = {
                         <AsyncRefDemo />
                     )}
                     <CodeBlock
-                        code={`<SchemaForm
-  schema={mainSchema}
-  getSchema={async (requestedSchema) => {
+                                                code={`async function getSchema(requestedSchema: string) {
     const response = await fetch(\`/api/schemas?ref=\${encodeURIComponent(requestedSchema)}\`);
     if (!response.ok) {
-      throw new Error("Schema fetch failed");
+        throw new Error("Schema fetch failed");
     }
     return await response.json();
-  }}
+}
+
+<SchemaForm
+    schema={mainSchema}
+    getSchema={getSchema}
 />;`}
                     />
                     <p>
@@ -863,7 +895,9 @@ const virtualizer: FormHellVirtualizerFactory = {
                         <code>peerSchemas</code> accepts either an array of schema documents (each identified by its own
                         <code> $id</code>) or a record keyed by an explicit reference string, letting an application preload every
                         schema document it already has instead of round-tripping through <code>getSchema</code> for schemas it
-                        controls.
+                        controls. Keep this input stable while editing: replacing it causes a new resolution and form
+                        initialization, even when the documents have identical contents. If a document must be fetched after
+                        the form mounts, pass a stable <code>getSchema</code> function instead of updating <code>peerSchemas</code>.
                     </p>
                     {!isBigBoy && (
                         <PeerSchemasFormDemo />
@@ -881,14 +915,17 @@ const virtualizer: FormHellVirtualizerFactory = {
   }
 };
 
-<SchemaForm
-  schema={{
+const shippingSchema = {
     type: "object",
     properties: {
-      shippingAddress: { $ref: "https://example.com/schemas/address#/definitions/address" }
+        shippingAddress: { $ref: "https://example.com/schemas/address#/definitions/address" }
     }
-  }}
-  peerSchemas={[addressSchema]}
+};
+const peerSchemas = [addressSchema];
+
+<SchemaForm
+    schema={shippingSchema}
+    peerSchemas={peerSchemas}
 />;`}
                     />
                 </div>

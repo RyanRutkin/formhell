@@ -187,6 +187,7 @@ export function SchemaForm<TData = OutputData>(props: SchemaFormProps<TData>) {
           value={formData}
           onChange={handleFieldChange}
           widgets={widgets}
+          selectOptionFormatter={options?.selectOptionFormatter}
           virtualization={options?.virtualization}
           validationErrors={validationErrors}
         />
