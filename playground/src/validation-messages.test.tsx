@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { SchemaForm, type JSONSchema, type SchemaFormValidationMessageContext } from "formhell";
+import { SchemaForm, useFormHellFieldValidationMessages, type FieldComponentProps, type JSONSchema, type SchemaFormValidationMessageContext } from "formhell";
 import { advancedExampleSchema } from "./docs/exampleData";
 
 const colorSchema: JSONSchema = {
@@ -30,6 +30,16 @@ function summaryMessages(container: HTMLElement): string[] {
   return Array.from(container.querySelectorAll(".raf-form-message-text")).map((node) => node.textContent ?? "");
 }
 
+function CustomColorWidget({ pointer, value, onChange }: FieldComponentProps<string>) {
+  const messages = useFormHellFieldValidationMessages(pointer);
+  return (
+    <div>
+      <input aria-label="Custom color" value={value ?? ""} onChange={(event) => onChange(event.target.value)} />
+      {messages.map((message) => <span key={message}>{message}</span>)}
+    </div>
+  );
+}
+
 function ControlledAdvancedExample({ onErrors }: { onErrors: (errors: string[]) => void }) {
   const [data, setData] = useState<Record<string, unknown>>({});
 
@@ -46,6 +56,68 @@ function ControlledAdvancedExample({ onErrors }: { onErrors: (errors: string[]) 
 }
 
 describe("Validation message display", () => {
+  it("updates external field errors without resetting data or emitting onChange", async () => {
+    const onChange = vi.fn();
+    const schema = colorSchema;
+    const data = { color: "#ffffff" };
+    const { container, rerender } = render(
+      <SchemaForm schema={schema} data={data} externalErrors={{ "/color": ["Taken", "Unavailable"] }} onChange={onChange} />
+    );
+    await screen.findByText("Palette");
+    expect(fieldMessagesFor(container, "Color")).toEqual(["Taken", "Unavailable"]);
+    expect(summaryMessages(container)).toEqual([]);
+    expect(onChange).toHaveBeenCalledTimes(1);
+    onChange.mockClear();
+
+    await userEvent.setup().type(colorInput(container), "!");
+    expect(colorInput(container).value).toBe("#ffffff!");
+    expect(onChange).toHaveBeenCalledTimes(1);
+    onChange.mockClear();
+
+    rerender(<SchemaForm schema={schema} data={data} externalErrors={{ "/color": ["Try another"] }} onChange={onChange} />);
+    expect(fieldMessagesFor(container, "Color")).toContain("Try another");
+    expect(fieldMessagesFor(container, "Color")).not.toContain("Taken");
+    expect(colorInput(container).value).toBe("#ffffff!");
+    expect(onChange).not.toHaveBeenCalled();
+
+    rerender(<SchemaForm schema={schema} data={data} externalErrors={{}} onChange={onChange} />);
+    expect(fieldMessagesFor(container, "Color")).not.toContain("Try another");
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("shows external errors alongside schema errors without changing the validation results", async () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <SchemaForm schema={colorSchema} data={{ color: "invalid" }} externalErrors={{ "/color": ["Already used"] }} onChange={onChange} />
+    );
+    await screen.findByText("Palette");
+    expect(fieldMessagesFor(container, "Color")[0]).toMatch(/pattern/i);
+    expect(fieldMessagesFor(container, "Color")[1]).toBe("Already used");
+    expect(summaryMessages(container)).toHaveLength(1);
+    expect(onChange.mock.calls[0][1].some((error: { message: string }) => error.message === "Already used")).toBe(false);
+  });
+
+  it("exposes external errors to custom widgets through the field-message hook", async () => {
+    render(
+      <SchemaForm
+        schema={colorSchema}
+        data={{ color: "#ffffff" }}
+        externalErrors={{ "/color": ["Server rejected color"] }}
+        widgets={{ "/properties/color": CustomColorWidget }}
+      />
+    );
+    expect(await screen.findByText("Server rejected color")).not.toBeNull();
+  });
+
+  it("respects the field-message display option for external errors", async () => {
+    const { container } = render(
+      <SchemaForm schema={colorSchema} data={{ color: "#ffffff" }} externalErrors={{ "/color": ["Taken"] }} options={{ showFieldValidationMessages: false }} />
+    );
+    await screen.findByText("Palette");
+    expect(fieldMessagesFor(container, "Color")).toEqual([]);
+    expect(summaryMessages(container)).toEqual([]);
+  });
+
   it("shows field and form messages by default", async () => {
     const user = userEvent.setup();
     const { container } = render(<SchemaForm schema={colorSchema} data={{ color: "#ffffff" }} />);

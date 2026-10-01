@@ -544,6 +544,13 @@ export function SchemaFormPage() {
                             messages directly beneath the field they relate to. Defaults to <code>true</code>.
                         </li>
                         <li>
+                            <strong><code>externalErrors?: Record&lt;string, string[]&gt;</code></strong> &mdash; additional messages
+                            keyed by data JSON Pointer (for example <code>{'{ "/email": ["Already registered"] }'}</code>).
+                            They appear beneath the corresponding fields alongside schema errors, but not in the form summary or
+                            <code> onChange</code> validation results. Changing them does not reinitialize the form. Custom widgets
+                            can read the combined field messages with <code>useFormHellFieldValidationMessages(pointer)</code>.
+                        </li>
+                        <li>
                             <strong><code>options?.showFormValidationMessages: boolean</code></strong> &mdash; renders the aggregated
                             validation messages below the form, inside the <code>SchemaForm</code> wrapper. Defaults to
                             <code> true</code>.
