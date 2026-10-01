@@ -89,29 +89,30 @@ function VirtualizationDemo() {
     );
 }
 
+const addressSchema: JSONSchema = {
+    $id: "https://example.com/schemas/address",
+    type: "object",
+    definitions: {
+        address: {
+            type: "object",
+            properties: { city: { type: "string" } },
+            required: ["city"]
+        }
+    }
+};
+
+const shippingSchema: JSONSchema = {
+    $id: "https://example.com/schemas/shipping",
+    type: "object",
+    properties: {
+        shippingAddress: { $ref: "https://example.com/schemas/address#/definitions/address" }
+    }
+};
+const shippingPeerSchemas = [addressSchema];
+
 function PeerSchemasFormDemo() {
     const [formData, setFormData] = useState<Record<string, any>>({} as Record<string, any>);
     const isBigBoy = useMediaQuery(DOCS_MEDIA_QUERIES.bigBoy);
-
-    const addressSchema: JSONSchema = {
-        $id: "https://example.com/schemas/address",
-        type: "object",
-        definitions: {
-            address: {
-                type: "object",
-                properties: { city: { type: "string" } },
-                required: ["city"]
-            }
-        }
-    };
-
-    const shippingSchema: JSONSchema = {
-        $id: "https://example.com/schemas/shipping",
-        type: "object",
-        properties: {
-            shippingAddress: { $ref: "https://example.com/schemas/address#/definitions/address" }
-        }
-    };
 
     return (
         <div className="docs-section-demo-wrapper">
@@ -120,7 +121,7 @@ function PeerSchemasFormDemo() {
                     <div className="docs-example-block docs-section-form-wrapper">
                         <SchemaForm
                             schema={shippingSchema}
-                            peerSchemas={[addressSchema]}
+                            peerSchemas={shippingPeerSchemas}
                             data={formData} onChange={(data) => setFormData(data as Record<string, any>)}
                         />
                     </div>
