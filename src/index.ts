@@ -48,6 +48,8 @@ export type {
 	SchemaFormValidationMessageContext,
 	SchemaFormValidationMessageFormatter,
 	SchemaBuilderProps,
+	SchemaBuilderSectionId,
+	SchemaBuilderSectionConfig,
 	SchemaBuilderHelperProps,
 	SchemaBuilderHelperContent,
 	SchemaBuilderHelperContentEntry,

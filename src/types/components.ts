@@ -177,9 +177,27 @@ export interface SchemaFormValidationError {
   params?: Record<string, unknown>;
 }
 
+export type SchemaBuilderSectionId =
+  | "moreDetails"
+  | "documentation"
+  | "metadata"
+  | "valueRules"
+  | "stringConstraints"
+  | "numberConstraints"
+  | "arrayRules"
+  | "objectRules"
+  | "composition";
+
+export interface SchemaBuilderSectionConfig {
+  id: SchemaBuilderSectionId;
+  include?: boolean;
+  defaultOpen?: boolean;
+}
+
 export interface SchemaBuilderProps {
   schema?: JSONSchema;
   domain?: string;
+  sections?: readonly SchemaBuilderSectionConfig[];
   onChange?: (schema: JSONSchema, validationErrors: SchemaBuilderValidationError[]) => void;
 }
 

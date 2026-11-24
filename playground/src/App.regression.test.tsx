@@ -914,23 +914,23 @@ describe("Playground regression guards", () => {
     await user.clear(maxLengthInput);
     await user.type(maxLengthInput, "12");
     await user.click(formatInput);
-    const formatOptions = await property.findByRole("listbox", { name: "format options" });
+    const formatOptions = await screen.findByRole("listbox", { name: "format options" });
     expect(within(formatOptions).getByRole("option", { name: "email" })).not.toBeNull();
     expect(within(formatOptions).getByRole("option", { name: "date" })).not.toBeNull();
 
     await user.clear(formatInput);
     await user.type(formatInput, "em");
-    const filteredOptions = await property.findByRole("listbox", { name: "format options" });
+    const filteredOptions = await screen.findByRole("listbox", { name: "format options" });
     expect(within(filteredOptions).getByRole("option", { name: "email" })).not.toBeNull();
     expect(within(filteredOptions).queryByRole("option", { name: "date" })).toBeNull();
 
     await user.click(within(filteredOptions).getByRole("option", { name: "email" }));
     expect((formatInput as HTMLInputElement).value).toBe("email");
-    expect(property.queryByRole("listbox", { name: "format options" })).toBeNull();
+    expect(screen.queryByRole("listbox", { name: "format options" })).toBeNull();
 
     await user.click(formatInput);
     await user.click(await property.findByRole("textbox", { name: "Pattern" }));
-    expect(property.queryByRole("listbox", { name: "format options" })).toBeNull();
+    expect(screen.queryByRole("listbox", { name: "format options" })).toBeNull();
 
     const previewToggle = await builder.findByText("Preview JSON Schema");
     await user.click(previewToggle);
