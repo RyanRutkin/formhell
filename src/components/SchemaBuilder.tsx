@@ -7,6 +7,8 @@ import type {
   SchemaBuilderHelperContentEntry,
   SchemaBuilderHelperProps,
   SchemaBuilderProps,
+  SchemaBuilderSectionConfig,
+  SchemaBuilderSectionId,
   SchemaBuilderValidationError
 } from "../types/components";
 import type { JSONSchema, JSONSchemaType } from "../types/schema";
@@ -43,6 +45,52 @@ interface FieldHelpContextValue {
 }
 
 const FieldHelpContext = createContext<FieldHelpContextValue | null>(null);
+
+const SECTION_TITLES: Record<SchemaBuilderSectionId, string> = {
+  moreDetails: "More Details",
+  documentation: "Documentation & References",
+  metadata: "Meta-data",
+  valueRules: "Value Rules",
+  stringConstraints: "String Constraints",
+  numberConstraints: "Number Constraints",
+  arrayRules: "Array Rules",
+  objectRules: "Object Rules",
+  composition: "Composition & Conditionals"
+};
+
+const DEFAULT_SECTIONS: readonly SchemaBuilderSectionConfig[] = [
+  { id: "moreDetails", defaultOpen: false },
+  { id: "documentation" },
+  { id: "metadata" },
+  { id: "valueRules" },
+  { id: "stringConstraints" },
+  { id: "numberConstraints" },
+  { id: "arrayRules" },
+  { id: "objectRules" },
+  { id: "composition" }
+];
+
+const BuilderSectionsContext = createContext<readonly SchemaBuilderSectionConfig[]>(DEFAULT_SECTIONS);
+
+function resolveSections(sections: readonly SchemaBuilderSectionConfig[]): readonly SchemaBuilderSectionConfig[] {
+  const seen = new Set<SchemaBuilderSectionId>();
+  for (const section of sections) {
+    if (!section || !Object.hasOwn(SECTION_TITLES, section.id)) {
+      throw new Error(`Unknown SchemaBuilder section: ${section?.id}`);
+    }
+    if (seen.has(section.id)) {
+      throw new Error(`Duplicate SchemaBuilder section: ${section.id}`);
+    }
+    if (section.defaultOpen !== undefined && typeof section.defaultOpen !== "boolean") {
+      throw new Error(`Invalid defaultOpen for SchemaBuilder section: ${section.id}`);
+    }
+    if (section.include !== undefined && typeof section.include !== "boolean") {
+      throw new Error(`Invalid include for SchemaBuilder section: ${section.id}`);
+    }
+    seen.add(section.id);
+  }
+  return [...sections, ...DEFAULT_SECTIONS.filter(({ id }) => !seen.has(id))];
+}
 
 const FIELD_HELP_BASE_CONTENT: Record<string, Pick<KeywordHelpDefinition, "summary" | "details">> = {
   "$id": {
@@ -715,7 +763,8 @@ export function SchemaBuilderHelper({
   );
 }
 
-export function SchemaBuilder({ schema, domain, onChange }: SchemaBuilderProps) {
+export function SchemaBuilder({ schema, domain, sections = DEFAULT_SECTIONS, onChange }: SchemaBuilderProps) {
+  const resolvedSections = resolveSections(sections);
   const [currentSchema, setCurrentSchema] = useState<JSONSchema>(() => schema ?? createDefaultRootSchema());
   const [rawJson, setRawJson] = useState(() => JSON.stringify(schema ?? createDefaultRootSchema(), null, 2));
   const [rawJsonError, setRawJsonError] = useState<string | null>(null);
@@ -768,7 +817,8 @@ export function SchemaBuilder({ schema, domain, onChange }: SchemaBuilderProps) 
   const prettySchema = useMemo(() => JSON.stringify(publishedSchema, null, 2), [publishedSchema]);
 
   return (
-    <FieldHelpContext.Provider value={{ openHelp, activeTypeahead, openTypeahead, closeTypeahead }}>
+    <BuilderSectionsContext.Provider value={resolvedSections}>
+      <FieldHelpContext.Provider value={{ openHelp, activeTypeahead, openTypeahead, closeTypeahead }}>
       <div className="raf-schema-builder">
         <SchemaNodeEditor
           schema={currentSchema}
@@ -829,7 +879,8 @@ export function SchemaBuilder({ schema, domain, onChange }: SchemaBuilderProps) 
       </div>
 
       <FieldInfoModal activeHelp={activeHelp} onClose={closeHelp} />
-    </FieldHelpContext.Provider>
+      </FieldHelpContext.Provider>
+    </BuilderSectionsContext.Provider>
   );
 }
 
@@ -857,6 +908,7 @@ function SchemaNodeEditor({
   showPrimaryTitle = isRoot
 }: SchemaNodeEditorProps) {
   const schemaTypes = getSchemaTypes(schema);
+  const sections = useContext(BuilderSectionsContext);
   const primaryType = schemaTypes.length === 1 ? schemaTypes[0] : undefined;
   const hasType = (type: JSONSchemaType) => schemaTypes.includes(type);
   const editableRootId = isRoot ? toLocalId(stringOrEmpty(schema.$id), domain) : stringOrEmpty(schema.$id);
@@ -892,8 +944,9 @@ function SchemaNodeEditor({
 
         {hasType("object") ? <ObjectSchemaEditor schema={schema} onChange={onChange} showAdvancedOptions={false} /> : null}
 
-        <BuilderDisclosureSection title="More Details">
-          <BuilderDisclosureSection title="Documentation & References" defaultOpen={true}>
+        {renderConfiguredSections(sections, {
+          documentation: (
+            <>
 
             <div className="raf-builder-grid">
               {!showPrimaryTitle ? (
@@ -935,9 +988,10 @@ function SchemaNodeEditor({
               value={stringOrEmpty(schema.description)}
               onChange={(value) => onChange(assignOptionalString(schema, "description", value))}
             />
-          </BuilderDisclosureSection>
-
-          <BuilderDisclosureSection title="Meta-data" defaultOpen={true}>
+            </>
+          ),
+          metadata: (
+            <>
 
             <div className="raf-builder-grid">
               <KeywordCheckbox
@@ -1021,15 +1075,16 @@ function SchemaNodeEditor({
                 }}
               />
             </div>
-          </BuilderDisclosureSection>
-
-          <BuilderDisclosureSection title="Value Rules" defaultOpen={true}>
+            </>
+          ),
+          valueRules: (
+            <>
             <ConstEditor schema={schema} schemaTypes={schemaTypes} primaryType={primaryType} onChange={onChange} />
             <EnumEditor schema={schema} schemaTypes={schemaTypes} primaryType={primaryType} onChange={onChange} />
-          </BuilderDisclosureSection>
-
-          {hasType("string") ? (
-            <BuilderDisclosureSection title="String Constraints" defaultOpen={true}>
+            </>
+          ),
+          stringConstraints: hasType("string") ? (
+            <>
               <div className="raf-builder-grid">
                 <TextInput
                   label="minLength"
@@ -1065,11 +1120,10 @@ function SchemaNodeEditor({
                 options={AJV_SUPPORTED_FORMATS}
                 placeholder="e.g. email"
               />
-            </BuilderDisclosureSection>
-          ) : null}
-
-          {hasType("number") || hasType("integer") ? (
-            <BuilderDisclosureSection title="Number Constraints" defaultOpen={true}>
+            </>
+          ) : null,
+          numberConstraints: hasType("number") || hasType("integer") ? (
+            <>
               <div className="raf-builder-grid">
                 <TextInput
                   label="Min"
@@ -1119,22 +1173,15 @@ function SchemaNodeEditor({
                   placeholder="e.g. 100"
                 />
               </div>
-            </BuilderDisclosureSection>
-          ) : null}
-
-          {hasType("array") ? (
-            <BuilderDisclosureSection title="Array Rules" defaultOpen={true}>
-              <ArraySchemaEditor schema={schema} onChange={onChange} />
-            </BuilderDisclosureSection>
-          ) : null}
-
-          {hasType("object") ? (
-            <BuilderDisclosureSection title="Object Rules" defaultOpen={true}>
-              <ObjectSchemaAdvancedEditor schema={schema} onChange={onChange} />
-            </BuilderDisclosureSection>
-          ) : null}
-
-          <BuilderDisclosureSection title="Composition & Conditionals" defaultOpen={true}>
+            </>
+          ) : null,
+          arrayRules: hasType("array") ? (
+            <ArraySchemaEditor schema={schema} onChange={onChange} />
+          ) : null,
+          objectRules: hasType("object") ? (
+            <ObjectSchemaAdvancedEditor schema={schema} onChange={onChange} />
+          ) : null,
+          composition: (
             <div className="raf-builder-section-group">
               <CombinationEditor kind="allOf" schema={schema} onChange={onChange} />
               <CombinationEditor kind="anyOf" schema={schema} onChange={onChange} />
@@ -1144,8 +1191,8 @@ function SchemaNodeEditor({
               <ConditionalSchemaEditor kind="then" schema={schema} onChange={onChange} />
               <ConditionalSchemaEditor kind="else" schema={schema} onChange={onChange} />
             </div>
-          </BuilderDisclosureSection>
-        </BuilderDisclosureSection>
+          )
+        })}
 
         {!isRoot && onRemove ? (
           <div className="raf-button-row">
@@ -1159,6 +1206,31 @@ function SchemaNodeEditor({
   );
 }
 
+function renderConfiguredSections(
+  sections: readonly SchemaBuilderSectionConfig[],
+  contents: Record<Exclude<SchemaBuilderSectionId, "moreDetails">, ReactNode>
+) {
+  const moreDetails = sections.find(({ id }) => id === "moreDetails");
+  if (moreDetails?.include === false) {
+    return null;
+  }
+  const applicable = sections.flatMap(({ id, ...config }) =>
+    id === "moreDetails" || config.include === false || contents[id] === null ? [] : [{ id, ...config }]
+  );
+  if (applicable.length === 0) {
+    return null;
+  }
+  return (
+    <BuilderDisclosureSection title="More Details" defaultOpen={moreDetails?.defaultOpen ?? false}>
+      {applicable.map(({ id, defaultOpen = true }) => (
+        <BuilderDisclosureSection key={id} title={SECTION_TITLES[id]} defaultOpen={defaultOpen}>
+          {contents[id]}
+        </BuilderDisclosureSection>
+      ))}
+    </BuilderDisclosureSection>
+  );
+}
+
 function BuilderDisclosureSection({
   title,
   children,
@@ -1168,8 +1240,9 @@ function BuilderDisclosureSection({
   children: ReactNode;
   defaultOpen?: boolean;
 }) {
+  const initialOpen = useRef(defaultOpen);
   return (
-    <details className="raf-builder-disclosure" open={defaultOpen}>
+    <details className="raf-builder-disclosure" open={initialOpen.current}>
       <summary className="raf-builder-disclosure-summary">{title}</summary>
       <div className="raf-builder-disclosure-content">{children}</div>
     </details>

@@ -93,11 +93,45 @@ export function SchemaBuilderPage() {
           referenced elsewhere). It has no effect on schemas that already declare their own <code>$id</code>.
         </li>
         <li>
+          <strong><code>sections?: readonly SchemaBuilderSectionConfig[]</code></strong> &mdash; controls the
+          order, inclusion and initial expansion of More Details and its sections for the root and every nested
+          schema. Listed child sections appear in the given order; unlisted sections follow in their default order.
+          Each entry has an <code>id</code> and optional <code>include</code> and <code>defaultOpen</code>
+          properties. <code>include</code> defaults to <code>true</code>; <code>defaultOpen</code> defaults to
+          <code> false</code> for <code>moreDetails</code> and <code>true</code> for child sections.
+          Set <code>include: false</code> to hide a section.
+          More Details is hidden if no included sections apply. Duplicate or unknown IDs are errors.
+          Type-specific sections still appear only for matching schema types. Expansion is initial state:
+          subsequent user toggles are preserved when the configuration is reordered, and changes to
+          <code> defaultOpen</code> apply when a section is next mounted.
+        </li>
+        <li>
           <strong><code>onChange?: (schema, validationErrors) =&gt; void</code></strong> &mdash; fires on every
           edit with the complete current schema and the complete current validation error list, so the consuming
           application never has to diff or merge partial updates.
         </li>
       </ul>
+
+      <CodeBlock
+        code={`<SchemaBuilder
+  sections={[
+    { id: "moreDetails", defaultOpen: true },
+    { id: "stringConstraints", defaultOpen: false },
+    { id: "documentation" },
+    { id: "valueRules", include: false }
+  ]}
+/>`}
+      />
+      <p>
+        Section IDs, in default order: <code>documentation</code>, <code>metadata</code>, <code>valueRules</code>,
+        <code> stringConstraints</code>, <code>numberConstraints</code>, <code>arrayRules</code>,
+        <code> objectRules</code>, and <code>composition</code>. Hiding a section only hides its controls;
+        it does not remove existing keywords from the schema. Configuring the outer section with
+        <code> moreDetails</code>: <code>{"{ id: \"moreDetails\", defaultOpen: true }"}</code> opens it initially,
+        while <code>{"{ id: \"moreDetails\", include: false }"}</code> hides it and all its child controls.
+        It remains the outer container regardless of its position in the array, and is initially collapsed
+        when no <code>defaultOpen</code> override is provided.
+      </p>
 
       <h2>Object keywords in detail</h2>
       <ul>
