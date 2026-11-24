@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import parse from "html-react-parser";
 import type {
   SchemaBuilderHelperContent,
@@ -36,6 +37,9 @@ interface KeywordHelpDefinition {
 
 interface FieldHelpContextValue {
   openHelp: (key: string, label: string, anchor: HelpAnchorRect) => void;
+  activeTypeahead: string | null;
+  openTypeahead: (id: string) => void;
+  closeTypeahead: (id: string) => void;
 }
 
 const FieldHelpContext = createContext<FieldHelpContextValue | null>(null);
@@ -716,6 +720,7 @@ export function SchemaBuilder({ schema, domain, onChange }: SchemaBuilderProps) 
   const [rawJson, setRawJson] = useState(() => JSON.stringify(schema ?? createDefaultRootSchema(), null, 2));
   const [rawJsonError, setRawJsonError] = useState<string | null>(null);
   const [activeHelp, setActiveHelp] = useState<ActiveFieldHelp | null>(null);
+  const [activeTypeahead, setActiveTypeahead] = useState<string | null>(null);
   const onChangeRef = useRef(onChange);
   const publishedSchema = useMemo(() => {
     const sanitized = sanitizeSchemaForOutput(currentSchema);
@@ -743,7 +748,17 @@ export function SchemaBuilder({ schema, domain, onChange }: SchemaBuilderProps) 
   };
 
   const openHelp = useCallback((key: string, label: string, anchor: HelpAnchorRect) => {
+    setActiveTypeahead(null);
     setActiveHelp({ key, label, anchor });
+  }, []);
+
+  const openTypeahead = useCallback((id: string) => {
+    setActiveHelp(null);
+    setActiveTypeahead(id);
+  }, []);
+
+  const closeTypeahead = useCallback((id: string) => {
+    setActiveTypeahead((current) => current === id ? null : current);
   }, []);
 
   const closeHelp = useCallback(() => {
@@ -753,7 +768,7 @@ export function SchemaBuilder({ schema, domain, onChange }: SchemaBuilderProps) 
   const prettySchema = useMemo(() => JSON.stringify(publishedSchema, null, 2), [publishedSchema]);
 
   return (
-    <FieldHelpContext.Provider value={{ openHelp }}>
+    <FieldHelpContext.Provider value={{ openHelp, activeTypeahead, openTypeahead, closeTypeahead }}>
       <div className="raf-schema-builder">
         <SchemaNodeEditor
           schema={currentSchema}
@@ -2226,10 +2241,12 @@ function useFieldHelp() {
 function FieldLabel({
   label,
   keyword,
+  controlId,
   labelType = "standard"
 }: {
   label: string;
   keyword?: string;
+  controlId?: string;
   labelType?: "standard" | "heading";
 }) {
   const fieldHelp = useFieldHelp();
@@ -2239,7 +2256,9 @@ function FieldLabel({
   return (
     <>
       <div className="raf-field-label-row">
-        {labelType === "heading" ? <h4 className="raf-builder-heading">{label}</h4> : <span className="raf-field-label">{label}</span>}
+        {labelType === "heading" ? <h4 className="raf-builder-heading">{label}</h4>
+          : controlId ? <label className="raf-field-label" htmlFor={controlId}>{label}</label>
+          : <span className="raf-field-label">{label}</span>}
         <button
           className="raf-info-button raf-button-secondary"
           type="button"
@@ -2361,6 +2380,7 @@ function FieldInfoModal({
 
     document.addEventListener("mousedown", closeIfOutside, true);
     document.addEventListener("touchstart", closeIfOutside, true);
+    document.addEventListener("focusin", closeIfOutside, true);
     document.addEventListener("wheel", closeIfOutside, true);
     document.addEventListener("scroll", closeIfOutside, true);
     document.addEventListener("keydown", handleKeyDown);
@@ -2368,6 +2388,7 @@ function FieldInfoModal({
     return () => {
       document.removeEventListener("mousedown", closeIfOutside, true);
       document.removeEventListener("touchstart", closeIfOutside, true);
+      document.removeEventListener("focusin", closeIfOutside, true);
       document.removeEventListener("wheel", closeIfOutside, true);
       document.removeEventListener("scroll", closeIfOutside, true);
       document.removeEventListener("keydown", handleKeyDown);
@@ -2428,10 +2449,12 @@ function TextInput({
   type?: string;
   step?: string;
 }) {
+  const controlId = useId();
   return (
-    <label className="raf-field">
-      <FieldLabel label={label} keyword={keyword} />
+    <div className="raf-field">
+      <FieldLabel label={label} keyword={keyword} controlId={controlId} />
       <input
+        id={controlId}
         className="raf-input raf-builder-control"
         type={type}
         aria-label={label}
@@ -2441,7 +2464,7 @@ function TextInput({
         onChange={(event) => onChange(event.target.value)}
       />
       {helperText ? <div className="raf-muted">{helperText}</div> : null}
-    </label>
+    </div>
   );
 }
 
@@ -2458,17 +2481,18 @@ function SelectInput({
   onChange: (value: string) => void;
   options: Array<{ value: string; label: string }>;
 }) {
+  const controlId = useId();
   return (
-    <label className="raf-field">
-      <FieldLabel label={label} keyword={keyword} />
-      <select className="raf-select raf-builder-control" aria-label={label} value={value} onChange={(event) => onChange(event.target.value)}>
+    <div className="raf-field">
+      <FieldLabel label={label} keyword={keyword} controlId={controlId} />
+      <select id={controlId} className="raf-select raf-builder-control" aria-label={label} value={value} onChange={(event) => onChange(event.target.value)}>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
       </select>
-    </label>
+    </div>
   );
 }
 
@@ -2487,65 +2511,167 @@ function TypeaheadInput({
   options: readonly string[];
   placeholder?: string;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLLabelElement | null>(null);
+  const controlId = useId();
+  const fieldHelp = useFieldHelp();
+  const isOpen = fieldHelp?.activeTypeahead === controlId;
+  const openMenu = () => fieldHelp?.openTypeahead(controlId);
+  const closeMenu = () => fieldHelp?.closeTypeahead(controlId);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const portalRef = useRef<HTMLDivElement | null>(null);
   const normalizedValue = value.trim().toLowerCase();
   const filteredOptions = options.filter((option) =>
     normalizedValue === "" ? true : option.toLowerCase().startsWith(normalizedValue)
   );
+  const showMenu = isOpen && filteredOptions.length > 0;
+  const supportsPopover = typeof HTMLElement !== "undefined" && typeof HTMLElement.prototype.showPopover === "function";
+
+  useLayoutEffect(() => {
+    const input = inputRef.current;
+    const menu = menuRef.current;
+    if (!showMenu || !input || !menu) {
+      return;
+    }
+
+    const doc = input.ownerDocument;
+    const win = doc.defaultView;
+    if (!win) {
+      return;
+    }
+
+    if (supportsPopover) {
+      menu.showPopover();
+    } else if (portalRef.current && containerRef.current) {
+      const sourceStyle = win.getComputedStyle(containerRef.current);
+      for (let index = 0; index < sourceStyle.length; index += 1) {
+        const property = sourceStyle.item(index);
+        if (property.startsWith("--")) {
+          portalRef.current.style.setProperty(property, sourceStyle.getPropertyValue(property));
+        }
+      }
+      portalRef.current.style.fontFamily = sourceStyle.fontFamily;
+    }
+
+    const positionMenu = () => {
+      const rect = input.getBoundingClientRect();
+      const gap = 4;
+      const margin = 4;
+      const viewportWidth = doc.documentElement.clientWidth || win.innerWidth;
+      const viewportHeight = doc.documentElement.clientHeight || win.innerHeight;
+      const below = Math.max(0, viewportHeight - rect.bottom - gap - margin);
+      const above = Math.max(0, rect.top - gap - margin);
+      const desiredHeight = Math.min(menu.scrollHeight + menu.offsetHeight - menu.clientHeight, 220);
+      const placeAbove = below < desiredHeight && above > below;
+      const availableHeight = placeAbove ? above : below;
+      const height = Math.min(desiredHeight, availableHeight);
+      const width = Math.min(rect.width, Math.max(0, viewportWidth - margin * 2));
+      const left = Math.max(margin, Math.min(rect.left, viewportWidth - width - margin));
+
+      menu.style.left = `${left}px`;
+      menu.style.top = `${placeAbove ? rect.top - gap - height : rect.bottom + gap}px`;
+      menu.style.width = `${width}px`;
+      menu.style.maxHeight = `${Math.min(220, availableHeight)}px`;
+    };
+
+    positionMenu();
+    win.addEventListener("resize", positionMenu);
+    doc.addEventListener("scroll", positionMenu, true);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(positionMenu);
+    observer?.observe(input);
+    return () => {
+      win.removeEventListener("resize", positionMenu);
+      doc.removeEventListener("scroll", positionMenu, true);
+      observer?.disconnect();
+      if (supportsPopover && menu.matches(":popover-open")) {
+        menu.hidePopover();
+      }
+    };
+  }, [showMenu, supportsPopover, filteredOptions.length]);
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
+    const handleOutsideInteraction = (event: Event) => {
+      if (!containerRef.current?.contains(event.target as Node) && !menuRef.current?.contains(event.target as Node)) {
+        fieldHelp?.closeTypeahead(controlId);
       }
     };
 
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [isOpen]);
+    document.addEventListener("mousedown", handleOutsideInteraction);
+    document.addEventListener("focusin", handleOutsideInteraction);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideInteraction);
+      document.removeEventListener("focusin", handleOutsideInteraction);
+    };
+  }, [isOpen, fieldHelp?.closeTypeahead, controlId]);
+
+  const menu = showMenu ? (
+    <div
+      ref={menuRef}
+      className="raf-typeahead-menu"
+      role="listbox"
+      aria-label={`${label} options`}
+      popover={supportsPopover ? "manual" : undefined}
+    >
+      {filteredOptions.map((option) => (
+        <button
+          key={option}
+          className="raf-typeahead-option"
+          type="button"
+          role="option"
+          aria-selected={value === option}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => {
+            onChange(option);
+            closeMenu();
+          }}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
+  const portalTarget = !supportsPopover && inputRef.current
+    ? inputRef.current.closest("dialog[open]") ?? inputRef.current.ownerDocument.body
+    : null;
 
   return (
-    <label className="raf-field raf-typeahead" ref={containerRef}>
-      <FieldLabel label={label} keyword={keyword} />
+    <div
+      className="raf-field raf-typeahead"
+      ref={containerRef}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && isOpen) {
+          event.preventDefault();
+          event.stopPropagation();
+          inputRef.current?.focus();
+          closeMenu();
+        }
+      }}
+    >
+      <FieldLabel label={label} keyword={keyword} controlId={controlId} />
       <input
+        ref={inputRef}
+        id={controlId}
         className="raf-input raf-builder-control"
         type="text"
         aria-label={label}
         value={value}
         placeholder={placeholder}
-        onFocus={() => setIsOpen(true)}
-        onClick={() => setIsOpen(true)}
+        onFocus={openMenu}
+        onClick={openMenu}
         onChange={(event) => {
-          setIsOpen(true);
+          openMenu();
           onChange(event.target.value);
         }}
       />
-      {isOpen && filteredOptions.length > 0 ? (
-        <div className="raf-typeahead-menu" role="listbox" aria-label={`${label} options`}>
-          {filteredOptions.map((option) => (
-            <button
-              key={option}
-              className="raf-typeahead-option"
-              type="button"
-              role="option"
-              aria-selected={value === option}
-              onMouseDown={(event) => {
-                event.preventDefault();
-                onChange(option);
-                setIsOpen(false);
-              }}
-            >
-              {option}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </label>
+      {supportsPopover ? menu : portalTarget && menu
+        ? createPortal(<div className="raf-schema-builder" ref={portalRef}>{menu}</div>, portalTarget)
+        : null}
+    </div>
   );
 }
 
@@ -2560,16 +2686,18 @@ function TextAreaInput({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const controlId = useId();
   return (
-    <label className="raf-field">
-      <FieldLabel label={label} keyword={keyword} />
+    <div className="raf-field">
+      <FieldLabel label={label} keyword={keyword} controlId={controlId} />
       <textarea
+        id={controlId}
         className="raf-textarea raf-builder-control"
         aria-label={label}
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />
-    </label>
+    </div>
   );
 }
 
@@ -2640,6 +2768,7 @@ function ConstEditor({
   primaryType?: JSONSchemaType;
   onChange: (next: JSONSchema) => void;
 }) {
+  const controlId = useId();
   if (primaryType === "null" && schemaTypes.length === 1) {
     return null;
   }
@@ -2650,9 +2779,10 @@ function ConstEditor({
     const selectedIndex = enumValues.findIndex((entry) => deepEqual(entry, schema.const));
 
     return (
-      <label className="raf-field">
-        <FieldLabel label="Const" keyword="const" />
+      <div className="raf-field">
+        <FieldLabel label="Const" keyword="const" controlId={controlId} />
         <select
+          id={controlId}
           className="raf-select raf-builder-control"
           aria-label="Const"
           value={selectedIndex >= 0 ? String(selectedIndex) : ""}
@@ -2682,7 +2812,7 @@ function ConstEditor({
             </option>
           ))}
         </select>
-      </label>
+      </div>
     );
   }
 
