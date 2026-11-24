@@ -45,6 +45,10 @@ export function SchemaBuilderPage() {
         and constraints while getting immediate validation feedback, with the built form above updating live as
         you edit the schema.
       </p>
+      <p>
+        String format suggestions open above surrounding content, and you can also enter a custom format.
+        Browsers without popover support use a portal for the suggestion menu.
+      </p>
       
       <ExamplePanel title="SchemaBuilder overview example">
         <BuilderAndPreview />
