@@ -46,7 +46,7 @@ const lightTheme = createTheme({
 });
 
 function PlaygroundRoot() {
-  const [themeMode, setThemeMode] = useState<"hell" | "dark" | "light">("hell");
+  const [themeMode, setThemeMode] = useState<"hell" | "dark" | "light">("light");
   const theme = themeMode === "hell" ? hellTheme : themeMode === "dark" ? darkTheme : lightTheme;
 
   return (

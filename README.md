@@ -14,6 +14,15 @@ npm install formhell
 
 For peer dependencies and a complete first-form walkthrough, see the [Installation page](https://ryanrutkin.github.io/formhell/?page=installation).
 
+## Playground
+
+The playground starts in the Light theme with the SchemaForm demo. Use the `component` query parameter to select the initial demo (values are case-insensitive):
+
+- [SchemaForm demo](https://ryanrutkin.github.io/formhell/playground.html?component=SchemaForm)
+- [SchemaBuilder demo](https://ryanrutkin.github.io/formhell/playground.html?component=SchemaBuilder)
+
+For local development, run `npm run playground:dev` and add `?component=SchemaBuilder` or `?component=SchemaForm` to the playground URL. The demo and theme controls remain available to change the selection.
+
 ## Resources
 
 - [FormHell on npm](https://www.npmjs.com/package/formhell)

@@ -59,11 +59,27 @@ class FormErrorBoundary extends Component<{ children: ReactNode }, { message: st
 
 type ThemeMode = "hell" | "dark" | "light";
 
-export default function App({ themeMode = "hell", onThemeToggle }: { themeMode?: ThemeMode; onThemeToggle?: (mode: ThemeMode) => void }) {
+function initialShowcaseMode(): "form" | "builder" {
+  const component = new URLSearchParams(window.location.search).get("component");
+  if (component === null) {
+    return "form";
+  }
+  switch (component.toLowerCase()) {
+    case "schemaform":
+      return "form";
+    case "schemabuilder":
+      return "builder";
+    default:
+      console.warn(`Unknown playground component "${component}". Use SchemaForm or SchemaBuilder. Showing SchemaForm.`);
+      return "form";
+  }
+}
+
+export default function App({ themeMode = "light", onThemeToggle }: { themeMode?: ThemeMode; onThemeToggle?: (mode: ThemeMode) => void }) {
   const [data, setData] = useState<OutputData>(initialProfileData);
   const [lastEventLabel, setLastEventLabel] = useState("No changes yet.");
   const [lastEventDetail, setLastEventDetail] = useState("");
-  const [showcaseMode, setShowcaseMode] = useState<"form" | "builder">("form");
+  const [showcaseMode, setShowcaseMode] = useState(initialShowcaseMode);
   const [builderSchema, setBuilderSchema] = useState<JSONSchema | null>(null);
   const [builderSidebarView, setBuilderSidebarView] = useState<"assistant" | "form" | "schema">("assistant");
   const [builderSidebarDirection, setBuilderSidebarDirection] = useState<"forward" | "backward">("forward");
