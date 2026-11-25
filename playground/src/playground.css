@@ -63,13 +63,13 @@ body {
   position: relative;
   display: inline-flex;
   align-items: center;
-  width: 10.5rem;
+  width: 9rem;
   height: 2rem;
   box-sizing: border-box;
   margin-top: 0.875rem;
   border: 0.0625rem solid rgba(246, 234, 216, 0.62);
   border-radius: 999px;
-  padding: 0 0.625rem;
+  padding: 0;
   background: rgba(23, 19, 19, 0.45);
   color: inherit;
   cursor: pointer;
@@ -103,10 +103,11 @@ body {
 
 .play-theme-thumb {
   position: absolute;
-  top: 0.1875rem;
-  left: 0.1875rem;
-  width: 3.25rem;
-  height: 1.5rem;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 33.333%;
+  height: 100%;
   border-radius: 999px;
   background: var(--hell-red);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.32);
@@ -114,11 +115,11 @@ body {
 }
 
 .play-theme-toggle[data-theme-mode="dark"] .play-theme-thumb {
-  transform: translateX(3.5rem);
+  transform: translateX(3rem);
 }
 
 .play-theme-toggle[data-theme-mode="light"] .play-theme-thumb {
-  transform: translateX(7rem);
+  transform: translateX(6rem);
 }
 
 .play-header-guides {
