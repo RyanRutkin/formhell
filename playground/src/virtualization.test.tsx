@@ -441,14 +441,15 @@ describe("Built-in array virtualization", () => {
 
   it("disposes a custom virtualizer when the form unmounts", async () => {
     const dispose = vi.fn();
+    const create = vi.fn<FormHellVirtualizerFactory["create"]>(({ count }) => ({
+      getRange: () => ({ startIndex: 0, endIndex: Math.min(1, count - 1), totalSize: count * 160, getItemOffset: (index) => index * 160 }),
+      measure: () => undefined,
+      dispose
+    }));
     const factory: FormHellVirtualizerFactory = {
-      create: ({ count }) => ({
-        getRange: () => ({ startIndex: 0, endIndex: Math.min(1, count - 1), totalSize: count * 160, getItemOffset: (index) => index * 160 }),
-        measure: () => undefined,
-        dispose
-      })
+      create
     };
-    const { unmount } = render(
+    const { container, unmount } = render(
       <SchemaForm
         schema={schema}
         data={data}
@@ -456,7 +457,11 @@ describe("Built-in array virtualization", () => {
       />
     );
 
-    await waitFor(() => expect(dispose).not.toHaveBeenCalled());
+    await waitFor(() => {
+      expect(create).toHaveBeenCalledTimes(1);
+      expect(container.querySelectorAll(".raf-virtualized-collection-item")).toHaveLength(2);
+    });
+    expect(dispose).not.toHaveBeenCalled();
     unmount();
     expect(dispose).toHaveBeenCalledTimes(1);
   });
